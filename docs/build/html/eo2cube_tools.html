@@ -1,0 +1,547 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>eo2cube_tools package &mdash; eo2cube-tools  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> eo2cube-tools
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">eo2cube_tools package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-eo2cube_tools.clip_xr2gpd">eo2cube_tools.clip_xr2gpd module</a></li>
+<li><a class="reference internal" href="#eo2cube-tools-dask-module">eo2cube_tools.dask module</a></li>
+<li><a class="reference internal" href="#module-eo2cube_tools.display_map_polygons">eo2cube_tools.display_map_polygons module</a></li>
+<li><a class="reference internal" href="#module-eo2cube_tools.extract">eo2cube_tools.extract module</a></li>
+<li><a class="reference internal" href="#module-eo2cube_tools.load_gdf">eo2cube_tools.load_gdf module</a></li>
+<li><a class="reference internal" href="#eo2cube-tools-mosaic-module">eo2cube_tools.mosaic module</a></li>
+<li><a class="reference internal" href="#module-eo2cube_tools.plot">eo2cube_tools.plot module</a></li>
+<li><a class="reference internal" href="#module-eo2cube_tools.spectralindices">eo2cube_tools.spectralindices module</a></li>
+<li><a class="reference internal" href="#module-eo2cube_tools.unpacks2scl">eo2cube_tools.unpacks2scl module</a></li>
+<li><a class="reference internal" href="#module-eo2cube_tools.utils">eo2cube_tools.utils module</a></li>
+<li><a class="reference internal" href="#module-eo2cube_tools">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">eo2cube-tools</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>eo2cube_tools package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/eo2cube_tools.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="eo2cube-tools-package">
+<h1>eo2cube_tools package<a class="headerlink" href="#eo2cube-tools-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-eo2cube_tools.clip_xr2gpd">
+<span id="eo2cube-tools-clip-xr2gpd-module"></span><h2>eo2cube_tools.clip_xr2gpd module<a class="headerlink" href="#module-eo2cube_tools.clip_xr2gpd" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="eo2cube_tools.clip_xr2gpd.clip_xr2gpd">
+<code class="sig-prename descclassname">eo2cube_tools.clip_xr2gpd.</code><code class="sig-name descname">clip_xr2gpd</code><span class="sig-paren">(</span><em class="sig-param">dataset</em>, <em class="sig-param">gpd</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.clip_xr2gpd.clip_xr2gpd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clips a xArray Dataset to a GeoPandasDataframe.</p>
+<p>Takes an xArray dataset and a Geodataframe and clips the xArray dataset to the shape of the Geodataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>xr.Dataset</em>) – A multi-dimensional array with x,y and time dimensions and one or more data variables.</p></li>
+<li><p><strong>gpd</strong> (<em>geopandas.Geodataframe</em>) – A geodataframe object with one or more observations or variables and a geometry column. A filterd geodataframe
+can also be used as input.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>masked_dataset</strong> – A xr.Dataset like the input dataset with only pixels which are within the polygons of the geopandas.Geodataframe.
+Every other pixel is given the value NaN.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="eo2cube-tools-dask-module">
+<h2>eo2cube_tools.dask module<a class="headerlink" href="#eo2cube-tools-dask-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-eo2cube_tools.display_map_polygons">
+<span id="eo2cube-tools-display-map-polygons-module"></span><h2>eo2cube_tools.display_map_polygons module<a class="headerlink" href="#module-eo2cube_tools.display_map_polygons" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="eo2cube_tools.display_map_polygons.display_map_polygons">
+<code class="sig-prename descclassname">eo2cube_tools.display_map_polygons.</code><code class="sig-name descname">display_map_polygons</code><span class="sig-paren">(</span><em class="sig-param">gdf=None</em>, <em class="sig-param">tooltip_attributes=None</em>, <em class="sig-param">longitude=None</em>, <em class="sig-param">latitude=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.display_map_polygons.display_map_polygons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a folium map based on a lat-lon bounded rectangle.</p>
+<p>Takes a geodataframe and plots the shapes of the geodataframe in a folium map. The extent is defined by a lat-lon
+bounded rectangle. Also information or column values from the geodataframe can be defined for single shapes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gdf</strong> (<em>geopandas.Geodataframe</em>) – A geodataframe object with one or more observations or variables and a geometry column. A filterd geodataframe
+can also be used as input.</p></li>
+<li><p><strong>tooltop_attributes</strong> (<em>(</em><em>string</em><em>,</em><em>string</em><em>)</em>) – A tuple of column names of the geodataframe. The value of the defined columns are displayed for each observation
+in the folium map by clicking on the shape.</p></li>
+<li><p><strong>latitude</strong> (<em>(</em><em>float</em><em>,</em><em>float</em><em>)</em>) – A tuple of latitude bounds in (min,max) format.</p></li>
+<li><p><strong>longitude</strong> (<em>(</em><em>float</em><em>, </em><em>float</em><em>)</em>) – A tuple of longitude bounds in (min,max) format.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>folium.Map</em> – A map centered on the lat lon bounds displaying all shapes of the geodataframe with the defined column
+informations.</p></li>
+<li><p><em>.. _Folium</em> – <a class="reference external" href="https://github.com/python-visualization/folium">https://github.com/python-visualization/folium</a></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-eo2cube_tools.extract">
+<span id="eo2cube-tools-extract-module"></span><h2>eo2cube_tools.extract module<a class="headerlink" href="#module-eo2cube_tools.extract" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="eo2cube_tools.extract.extract">
+<code class="sig-prename descclassname">eo2cube_tools.extract.</code><code class="sig-name descname">extract</code><span class="sig-paren">(</span><em class="sig-param">dataset</em>, <em class="sig-param">gpd</em>, <em class="sig-param">bands</em>, <em class="sig-param">func='raw'</em>, <em class="sig-param">na_rm=True</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.extract.extract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts values of xArray Dataset at the locations of spatial data and gives out all cell values or
+calculates zonal statistics for the spatial data.</p>
+<p>Extract values from xArray Dataset at the locations of other spatial data. You can use points, lines,
+or polygons in the form of a GeopandasDataframe. The values are extracted for every band defined in “bands”.
+It is possible to get all the “raw” datavalues (all values which are within the shape) for a spatial data shape
+or to use a predefined function (e.g. mean, min, max, std) to calculate zonal statistics of all the values of the
+spatial data shape.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>xr.Dataset</em>) – A multi-dimensional array with x,y and time dimensions and one or more data variables.</p></li>
+<li><p><strong>gpd</strong> (<em>GeoPandasDataFrame</em>) – A geodataframe object with one or more observations or variables and a geometry column. A filtered geodataframe
+can also be used as input.</p></li>
+<li><p><strong>bands</strong> (<em>list</em><em>,</em><em>string</em>) – List with band names of dataset, e.g ([“blue”, “green”, “red”]), for which values should be extracted.</p></li>
+<li><p><strong>func</strong> (<em>string</em><em>, </em><em>(</em><em>default = &quot;raw&quot;</em><em>)</em>) – Select name of statistics function like “mean”, “max”, “min”, “std”. If function is selected the values are
+calculated with the defined function. Gives out one value for each band. The default is set to “raw”. In this
+case no function is applied and the values are displayed in “raw” format (all values) in the output dictionary.</p></li>
+<li><p><strong>na_rm</strong> (<em>bool</em><em>, </em><em>(</em><em>default = True</em><em>)</em>) – If True all nan values are eliminated from the results. If False the results are displayed with nan values.
+If a statistic function is defined in “func” the nan values are automatically removed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p><strong>results_scenes</strong> – Dict which contains dataframes for every scene of dataset with values of all bands or values calculated by a
+function which are located within the spatial data. The dataframes contain the values for each bands and the
+same index like gpd, to assign the values to a specific spatial data shape. To display the extracted values
+of a single timestep (scene) just select the index of the desired timestep in the output dictionary, like e.g.</p>
+<p>example = extract(dataset, gpd, bands = [“blue”, “green”, “red”], func = “mean”)
+example[“scene_index_0”]</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-eo2cube_tools.load_gdf">
+<span id="eo2cube-tools-load-gdf-module"></span><h2>eo2cube_tools.load_gdf module<a class="headerlink" href="#module-eo2cube_tools.load_gdf" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="eo2cube_tools.load_gdf.load_gdf">
+<code class="sig-prename descclassname">eo2cube_tools.load_gdf.</code><code class="sig-name descname">load_gdf</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">cols='all'</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.load_gdf.load_gdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a vectordataset from the PostGIS database and stores it as a gpd.Geodataframe.</p>
+<p>Connects to the PostGIS database and loads a vectordataset from there. The vectordataset must be imported to the PostGIS
+database in advance (this can be done by a user of the Departement of Remote Sensing of the University Würzburg).
+The function calls the file by its filename in the PostGIS database. It´s possible to define which columns should be
+included. The default alternative is to load all existing columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>string</em>) – The name of the vectordataset in the PostGIS database. If unsure, ask the staff member of the Department of Remote
+Sensing which imported your dataset to the PostGIS database.</p></li>
+<li><p><strong>cols</strong> (<em>list</em><em>,</em><em>string</em><em> (</em><em>default = &quot;all&quot;</em><em>)</em>) – List with column names of the vectordataset, e.g ([“column1”, “column2”, “column3”]), which should be loaded. If
+used, only the “real” existing columns need to be defined. The “geom” column and the “gid” column (indexing of
+the PostGIS database) are always loaded. The default is set to “all” which loads all columns of the vectordataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>gdf</strong> – Geodataframe from PostGIS database with the defined or all columns.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>gpd.GeoDataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="eo2cube-tools-mosaic-module">
+<h2>eo2cube_tools.mosaic module<a class="headerlink" href="#eo2cube-tools-mosaic-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-eo2cube_tools.plot">
+<span id="eo2cube-tools-plot-module"></span><h2>eo2cube_tools.plot module<a class="headerlink" href="#module-eo2cube_tools.plot" title="Permalink to this headline">¶</a></h2>
+<dl class="attribute">
+<dt id="eo2cube_tools.plot.normalize_data">
+<code class="sig-prename descclassname">eo2cube_tools.plot.</code><code class="sig-name descname">normalize_data</code><a class="headerlink" href="#eo2cube_tools.plot.normalize_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="eo2cube_tools.plot.plot_band">
+<code class="sig-prename descclassname">eo2cube_tools.plot.</code><code class="sig-name descname">plot_band</code><span class="sig-paren">(</span><em class="sig-param">dataset, dims=['x', 'y'], height=500, width=500, clims=None, norm='eq_hist', cmap=['black', 'white'], nodata=1</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.plot.plot_band" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interactive visualization of xarray time series</p>
+<p>Takes an xarray time dataset and creates an interactive panel which allows to inspect the different data variables at different time steps</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>xarray.Dataset</em>) – A multi-dimensional array with x,y and time dimensions and one or more data variables.</p></li>
+<li><p><strong>dim</strong> (<em>list</em><em>, </em><em>str</em>) – A list containing the names of the x and y dimension.</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of the created plot specified in pixels.</p></li>
+<li><p><strong>width</strong> (<em>int</em>) – Width of the created plot specified in pixels.</p></li>
+<li><p><strong>clims</strong> (<em>int</em><em>,</em><em>float</em>) – Min and max data values to use for colormap interpolation.</p></li>
+<li><p><strong>norm</strong> – The normalization operation applied before colormapping. Valid options include ‘linear’, ‘log’, ‘eq_hist’, ‘cbrt’.</p></li>
+<li><p><strong>cmap</strong> (<em>list</em><em>, </em><em>str</em>) – Used for the colormap of single-layer datashader output.</p></li>
+<li><p><strong>nodata</strong> (<em>int</em>) – Value defining the nodata value for the dataset</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="eo2cube_tools.plot.plot_rgb">
+<code class="sig-prename descclassname">eo2cube_tools.plot.</code><code class="sig-name descname">plot_rgb</code><span class="sig-paren">(</span><em class="sig-param">dataset, bands=['blue', 'green', 'red'], dims=['x', 'y'], height=700, width=700, clims=None, norm='eq_hist', cmap=['black', 'white'], nodata=1</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.plot.plot_rgb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interactive RGB visualization of a xarray time series</p>
+<p>Takes an xarray time dataset and creates an interactive panel which allows to inspect the different data variables at different time steps</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>xarray.Dataset</em>) – A multi-dimensional array with x,y and time dimensions and one or more data variables.</p></li>
+<li><p><strong>bands</strong> (<em>int</em><em>, </em><em>str</em>) – A list of names defining the data variables used for the red, green and blue band</p></li>
+<li><p><strong>dim</strong> (<em>list</em><em>, </em><em>str</em>) – A list containing the names of the x and y dimension.</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of the created plot specified in pixels.</p></li>
+<li><p><strong>width</strong> (<em>int</em>) – Width of the created plot specified in pixels.</p></li>
+<li><p><strong>clims</strong> (<em>int</em><em>,</em><em>float</em>) – Min and max data values to use for colormap interpolation.</p></li>
+<li><p><strong>norm</strong> – The normalization operation applied before colormapping. Valid options include ‘linear’, ‘log’, ‘eq_hist’, ‘cbrt’.</p></li>
+<li><p><strong>cmap</strong> (<em>list</em><em>, </em><em>str</em>) – Used for the colormap of single-layer datashader output.</p></li>
+<li><p><strong>nodata</strong> (<em>int</em>) – Value defining the nodata value for the dataset</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="eo2cube_tools.plot.spectral_analyze">
+<code class="sig-prename descclassname">eo2cube_tools.plot.</code><code class="sig-name descname">spectral_analyze</code><span class="sig-paren">(</span><em class="sig-param">dataset, timeindex=0, bands=['red', 'green', 'blue'], dims=['x', 'y'], height=500, width=500, clims=None, norm='eq_hist', cmap=['black', 'white'], nodata=1</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.plot.spectral_analyze" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interactivly visualize the spectral profile of single pixels in a multi-band xarray dataset</p>
+<p>Takes an xarray dataset and creates an interactive panel which allows to inspect the spectral profile for each pixel in a multi-band xarray dataset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>xarray.Dataset</em>) – A multi-dimensional array with x,y and time dimensions and one or more data variables.</p></li>
+<li><p><strong>timeindex</strong> (<em>int</em>) – Integer value used to select one time step from the input dataset for plotting.</p></li>
+<li><p><strong>bands</strong> (<em>int</em><em>, </em><em>str</em>) – A list of names defining the data variables used for the red, green and blue band</p></li>
+<li><p><strong>dim</strong> (<em>list</em><em>, </em><em>str</em>) – A list containing the names of the x and y dimension.</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of the created plot specified in pixels.</p></li>
+<li><p><strong>width</strong> (<em>int</em>) – Width of the created plot specified in pixels.</p></li>
+<li><p><strong>clims</strong> (<em>int</em><em>,</em><em>float</em>) – Min and max data values to use for colormap interpolation.</p></li>
+<li><p><strong>norm</strong> – The normalization operation applied before colormapping. Valid options include ‘linear’, ‘log’, ‘eq_hist’, ‘cbrt’.</p></li>
+<li><p><strong>cmap</strong> (<em>list</em><em>, </em><em>str</em>) – Used for the colormap of single-layer datashader output.</p></li>
+<li><p><strong>nodata</strong> (<em>int</em>) – Value defining the nodata value for the dataset</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-eo2cube_tools.spectralindices">
+<span id="eo2cube-tools-spectralindices-module"></span><h2>eo2cube_tools.spectralindices module<a class="headerlink" href="#module-eo2cube_tools.spectralindices" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="eo2cube_tools.spectralindices.spectralindices">
+<code class="sig-prename descclassname">eo2cube_tools.spectralindices.</code><code class="sig-name descname">spectralindices</code><span class="sig-paren">(</span><em class="sig-param">dataset, indices=['NDVI'], norm=True, drop=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.spectralindices.spectralindices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a suite of spectral indices</p>
+<p>Takes an xarray dataset containing spectral bands, calculates one or more
+spectral indices and adds the resulting array as a new variable in the original dataset.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Indices:</dt><dd><ul class="simple">
+<li><p>EVI: Enhanced Vegetation Index (Huete 2002)</p></li>
+<li><p>LAI: Leaf Area Index (Boegh 2002)</p></li>
+<li><p>MNDWI: Modified Normalised Difference Water Index (Xu 1996)</p></li>
+<li><p>MSAVI: Modified Soil Adjusted Vegetation Index (Qi et al. 1994)</p></li>
+<li><p>NBR: Normalised Burn Ratio (Lopez Garcia 1991)</p></li>
+<li><p>NDVI: Normalised Difference Vegetation Index (Rouse 1973)</p></li>
+<li><p>NDWI: Normalised Difference Water Index (McFeeters 1996)</p></li>
+<li><p>SAVI: Soil Adjusted Vegetation Index (Huete 1988)</p></li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>xarray.Dataset</em>) – A two-dimensional or multi-dimensional array containing the spectral bands required to calculate the index.</p></li>
+<li><p><strong>indices</strong> (<em>str</em><em> or </em><em>list of strs</em>) – A string or a list of strings giving the names of the indices to calculate</p></li>
+<li><p><strong>norm</strong> (<em>bool</em><em>, </em><em>optional</em>) – If norm = True values are scaled to 0.0-1.0 by dividing by 10000.0</p></li>
+<li><p><strong>drop</strong> (<em>bool</em><em>, </em><em>optional</em>) – If drop = True only the index will be returned and the other bands will be dropped</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>dataset</strong> – The original xarray Dataset containing the calculated spectral indices as a DataArray.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-eo2cube_tools.unpacks2scl">
+<span id="eo2cube-tools-unpacks2scl-module"></span><h2>eo2cube_tools.unpacks2scl module<a class="headerlink" href="#module-eo2cube_tools.unpacks2scl" title="Permalink to this headline">¶</a></h2>
+<p># Adapted from:</p>
+<p>Copyright 2016 United States Government as represented by the Administrator
+of the National Aeronautics and Space Administration. All Rights Reserved.</p>
+<p>Portion of this code is Copyright Geoscience Australia, Licensed under the
+Apache License, Version 2.0 (the “License”); you may not use this file
+except in compliance with the License. You may obtain a copy of the License
+at</p>
+<blockquote>
+<div><p><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+</div></blockquote>
+<p>The CEOS 2 platform is licensed under the Apache License, Version 2.0 (the
+“License”); you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+<a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a>.</p>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations
+under the License.</p>
+<p># Use the sen2cor scene classifiaction band (scl) for creating masks using
+different classification types</p>
+<dl class="function">
+<dt id="eo2cube_tools.unpacks2scl.s2_unpack_scl">
+<code class="sig-prename descclassname">eo2cube_tools.unpacks2scl.</code><code class="sig-name descname">s2_unpack_scl</code><span class="sig-paren">(</span><em class="sig-param">data_array</em>, <em class="sig-param">cover_type</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.unpacks2scl.s2_unpack_scl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="eo2cube_tools.unpacks2scl.unpack_s2bits">
+<code class="sig-prename descclassname">eo2cube_tools.unpacks2scl.</code><code class="sig-name descname">unpack_s2bits</code><span class="sig-paren">(</span><em class="sig-param">s2_scl_endcoding</em>, <em class="sig-param">data_array</em>, <em class="sig-param">cover_type</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.unpacks2scl.unpack_s2bits" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Description:</dt><dd><p>Unpack bits for mask boolean mask</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Input:</dt><dd><p>land_cover_encoding(dict hash table) land cover endcoding provided by sen2cor scl
+data_array( xarray DataArray)
+cover_type(String) type of cover</p>
+</dd>
+<dt>Output:</dt><dd><p>unpacked DataArray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-eo2cube_tools.utils">
+<span id="eo2cube-tools-utils-module"></span><h2>eo2cube_tools.utils module<a class="headerlink" href="#module-eo2cube_tools.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="eo2cube_tools.utils.remove_empty_scenes">
+<code class="sig-prename descclassname">eo2cube_tools.utils.</code><code class="sig-name descname">remove_empty_scenes</code><span class="sig-paren">(</span><em class="sig-param">dataset, nodata=-9999, bands=['red'], dim=['x', 'y']</em><span class="sig-paren">)</span><a class="headerlink" href="#eo2cube_tools.utils.remove_empty_scenes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove time steps containing only no data values</p>
+<p>Takes an xarray dataset an drops all time steps which only contain no data values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>xarray.Dataset</em>) – A two-dimensional or multi-dimensional array</p></li>
+<li><p><strong>nodata</strong> (<em>int</em>) – nodata value used for filtering empty time steps</p></li>
+<li><p><strong>band</strong> (<em>list</em>) – A list of bands which should be used to check for no data scenes</p></li>
+<li><p><strong>dim</strong> (<em>list</em>) – A list containing the names of the x and y dimension</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>dataset</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>xarray Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-eo2cube_tools">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-eo2cube_tools" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Steven Hill, Pawel Kluter, Sebastian Förtsch, Moritz Rösch.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
