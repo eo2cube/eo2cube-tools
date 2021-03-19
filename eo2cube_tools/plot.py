@@ -342,7 +342,7 @@ def _degree_to_zoom_level(l1, l2, margin=0.0):
 
 
 def map_polygon(
-    gdf=None, tooltip_attributes=None, longitude=None, latitude=None
+    gdf=None, tooltip_attributes=None
 ):
     """
     Generates a folium map based on a lat-lon bounded rectangle.
@@ -358,10 +358,6 @@ def map_polygon(
     tooltop_attributes: (string,string)
         A tuple of column names of the geodataframe. The value of the defined columns are displayed for each observation
         in the folium map by clicking on the shape.
-    latitude: (float,float)
-        A tuple of latitude bounds in (min,max) format.
-    longitude: (float, float)
-        A tuple of longitude bounds in (min,max) format.
     Returns
     ----------
     folium.Map
@@ -370,9 +366,9 @@ def map_polygon(
     .. _Folium
         https://github.com/python-visualization/folium
     """
-    # assert locations is not None
-    assert latitude is not None
-    assert longitude is not None
+    
+    longitude = (gdf.bounds.minx[0], gdf.bounds.maxx[0])
+    latitude = (gdf.bounds.miny[0], gdf.bounds.maxy[0])
 
     ###### ###### ######   CALC ZOOM LEVEL     ###### ###### ######
     margin = -0.5
@@ -396,6 +392,10 @@ def map_polygon(
         control=True,
     ).add_to(map_hybrid)
     ###### ###### ######     POLYGONS    ###### ###### ######
+    
+    if tooltip_attributes != None:
+    	tooltip_attributes = folium.features.GeoJsonTooltip(fields=tooltip_attributes)
+    
     if gdf is not None:
         gjson = gdf.to_json()
         folium.features.GeoJson(gjson)
@@ -408,8 +408,8 @@ def map_polygon(
                 "weight": 3,
                 "fillOpacity": 0.1,
             },
-            highlight_function=lambda x: {"weight": 5, "fillOpacity": 0.5},
-            tooltip=folium.features.GeoJsonTooltip(fields=tooltip_attributes),
+            highlight_function=lambda x: {"weight": 5, "fillOpacity": 0.2},
+            tooltip=tooltip_attributes,
         ).add_to(map_hybrid)
     folium.LayerControl().add_to(map_hybrid)
     return map_hybrid
