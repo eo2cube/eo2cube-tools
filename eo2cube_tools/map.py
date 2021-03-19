@@ -16,7 +16,7 @@ def _degree_to_zoom_level(l1, l2, margin=0.0):
     return zoom_level_int
 
 
-def display_map_polygons(
+def map_polygon(
     gdf=None, tooltip_attributes=None, longitude=None, latitude=None
 ):
     """
