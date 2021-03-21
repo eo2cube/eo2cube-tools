@@ -57,7 +57,7 @@ def mask_values(ds, mask, inplace=False, nodata=None):
 
     return xr.DataArray(data, dims=ds.dims, coords=ds.coords, attrs=ds.attrs, name=ds.name)
 
-def slc_mask(dataset, categories = ['Dark features / Shadows','Vegetation', 'Not vegetated', 'Water', 'Unclassified', 'Snow or ice']):
+def scl_mask(dataset, categories = ['Dark features / Shadows','Vegetation', 'Not vegetated', 'Water', 'Unclassified', 'Snow or ice']):
     """
     Takes an xarray dataset, creates a mask based on categories defined in the SCL band and removes
     all Pixels not included in the specified categories.
