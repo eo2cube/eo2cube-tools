@@ -368,7 +368,7 @@ def map_polygon(
     """
     
     longitude = (gdf.total_bounds[0],gdf.total_bounds[2])
-    latitude = (gdf.total_bounds[1],gdf.total_bounds[4])
+    latitude = (gdf.total_bounds[1], gdf.total_bounds[3])
 
     ###### ###### ######   CALC ZOOM LEVEL     ###### ###### ######
     margin = -0.5
