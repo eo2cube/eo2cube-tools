@@ -401,7 +401,7 @@ def map_polygon(
         folium.features.GeoJson(gjson)
         folium.GeoJson(
             gjson,
-            name="Felder",
+            name="Polygons",
             style_function=lambda feature: {
                 "fillColor": "white",
                 "color": "red",
