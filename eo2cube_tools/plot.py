@@ -367,8 +367,8 @@ def map_polygon(
         https://github.com/python-visualization/folium
     """
     
-    longitude = (min(gdf.bounds.minx), max(gdf.bounds.maxx))
-    latitude = (min(gdf.bounds.miny), max(gdf.bounds.maxy))
+    longitude = (gdf.total_bounds[0],gdf.total_bounds[2])
+    latitude = (gdf.total_bounds[1],gdf.total_bounds[4])
 
     ###### ###### ######   CALC ZOOM LEVEL     ###### ###### ######
     margin = -0.5
