@@ -28,7 +28,7 @@ def clip_xr2gpd(dataset, gpd):
 
     # selects geometry of the desired gpd and formsa boolean mask from it
     ShapeMask = rasterio.features.geometry_mask(
-        gpd.loc[:, "geom"],
+        gpd.loc[:, "geometry"],
         out_shape=(len(dataset.latitude), len(dataset.longitude)),
         transform=dataset.geobox.transform,
         invert=True,
