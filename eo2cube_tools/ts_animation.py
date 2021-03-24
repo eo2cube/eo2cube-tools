@@ -27,6 +27,36 @@ credits goes to DEA!
 
 '''
 
+# Import required packages
+import math
+import branca
+import folium
+import calendar
+import ipywidgets
+import numpy as np
+import geopandas as gpd
+import matplotlib as mpl
+import matplotlib.cm as cm
+import matplotlib.patheffects as PathEffects
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from datetime import datetime
+from pyproj import Proj, transform
+from IPython.display import display
+from matplotlib.colors import ListedColormap
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from ipyleaflet import Map, Marker, Popup, GeoJSON, basemaps, Choropleth
+from skimage import exposure
+from odc.ui import image_aspect
+
+from matplotlib.animation import FuncAnimation
+import pandas as pd
+from pathlib import Path
+from shapely.geometry import box
+from skimage.exposure import rescale_intensity
+from tqdm.auto import tqdm
+import warnings
 
 
 
