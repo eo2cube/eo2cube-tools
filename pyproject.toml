@@ -6,16 +6,16 @@ authors = ["Steve <steven.hill@uni-wuerzburg.de>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-xarray = "^0.16.2"
-rasterio = "^1.2.0"
-pandas = "^1.2.1"
-geopandas = "^0.8.2"
+xarray = "^0.18.*"
+rasterio = "^1.2.*"
+pandas = "^1.2.*"
+geopandas = "^0.9.*"
 folium = "^0.12.1"
-dask = "^2021.1.1"
-holoviews = "^1.14.1"
-bokeh = "^2.2.3"
-datashader = "^0.12.0"
-panel = "^0.11.1"
+dask = "^2021.*"
+holoviews = "^1.14.*"
+bokeh = "^2.2.*"
+datashader = "^0.12.*"
+panel = "^0.11.*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
