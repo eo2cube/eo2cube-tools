@@ -163,18 +163,18 @@ def ssmask(dataset,strength=0.4):
     
     # Classified Scene: Partly clouds
     else:
-        counts, bin_edges = np.histogram(dataset.NDCI.values.flatten(), bins=30)
+        counts, bin_edges = np.histogram(ndci_arr, bins=30)
         if npeak <= 1:
             peak = np.argmax(counts)
             mode = (bin_edges[peak] + bin_edges[peak+1])/2 # check dominant NDCI value
 
-            par = stats.percentileofscore(dataset.NDCI.values.flatten(), mode) # get quantile for dominant NDCI value
+            par = stats.percentileofscore(ndci_arr, mode) # get quantile for dominant NDCI value
 
             factor = 1 - NDCI_std # define fector to adjust NDCI threshold 
             # the more variant NDCI, the more conservative to define the end of NDCI cluster
             adj_factor = (100 - par)*(factor/50) # tune the value to make sure percentile lies within 0% and 100%
             refine = (par + adj_factor)/100
-            NDCI_thres = np.quantile(dataset.NDCI.values.flatten(),refine) # calculate the NDCI threshold
+            NDCI_thres = np.quantile(ndci_arr,refine) # calculate the NDCI threshold
 
         else:
             min_indices = argrelmin(counts)[0]
