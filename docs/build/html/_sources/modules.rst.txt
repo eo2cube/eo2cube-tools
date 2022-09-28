@@ -1,7 +1,0 @@
-eo2cube_tools
-=============
-
-.. toctree::
-   :maxdepth: 4
-
-   eo2cube_tools
