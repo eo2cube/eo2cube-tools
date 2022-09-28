@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn import metrics 
 from sklearn.base import is_classifier, is_regressor
 import rasterio
+import geopandas as gpd
 
 def rasterize(gdf,da,attribute,):    
     crs = da.geobox.crs
@@ -101,7 +102,7 @@ class Classifier:
 
     def extract_Xy(self, ds, labels=None, attribute=None):
         if labels is not None:
-            if labels.__name__ == 'geopandas':
+            if 'GeoDataFrame' in str(type(gdf)):
                 if attribute is not None:
                     labels = extract_samples(ds, labels, attribute)
                 else:
