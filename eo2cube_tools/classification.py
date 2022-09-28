@@ -5,12 +5,30 @@ Source: These tools are a adapted version of classify.py in the nd package by Jo
 
 
 '''
+import geopandas as gpd
 import xarray as xr
 from collections import OrderedDict
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn import metrics 
 from sklearn.base import is_classifier, is_regressor
+import rasterio
+
+def rasterize(gdf,da,attribute,):    
+    crs = da.geobox.crs
+    transform = da.geobox.transform
+    dims = da.geobox.dims
+    xy_coords = [da[dims[0]], da[dims[1]]]
+    y, x = da.geobox.shape
+    gdf_reproj = gdf.to_crs(crs=crs)
+    shapes = zip(gdf_reproj.geometry, gdf_reproj[attribute])
+    arr = rasterio.features.rasterize(shapes=shapes,out_shape=(y, x),transform=transform)
+    xarr = xr.DataArray(arr,coords=xy_coords,dims=dims,attrs=da.attrs,)               
+    return xarr
+
+def extract_samples(ds, gdf, attribute):
+    mask = rasterize(gdf, ds, attribute=attribute)
+    return mask
 
 def get_features(ds, feature_dims=[]):
     data_dims = get_dimensions(ds, feature_dims=feature_dims)
@@ -45,7 +63,6 @@ def broadcast_array(arr, shape):
         new_shape[i] = dim
         matching[i] = None
     return np.broadcast_to(arr.reshape(new_shape), shape)
-
 
 def broadcast_labels(labels, ds, feature_dims=[]):
     shape = get_shape(ds, feature_dims=feature_dims)
@@ -82,7 +99,13 @@ class Classifier:
         else:
             self.type = 'cluster'
 
-    def extract_Xy(self, ds, labels=None):
+    def extract_Xy(self, ds, labels=None, attribute=None):
+        if labels is not None:
+            if labels.__name__ == 'geopandas':
+                if attribute is not None:
+                    labels = extract_samples(ds, labels, attribute)
+                else:
+                    print('Please provide the name of attribute column for rasterize')
         if isinstance(labels, xr.Dataset):
             raise ValueError("`labels` should be an xarray.DataArray or "
                              "numpy array")
@@ -113,8 +136,8 @@ class Classifier:
         self.X = X
         self.y = y
     
-    def train(self, ds, labels=None):
-        self.extract_Xy(ds, labels=labels)
+    def train(self, ds, labels=None, attribute=None):
+        self.extract_Xy(ds, labels=labels, attribute=attribute)
         if self.y is not None:
             if self.stratify == True:
                 stratify = self.y
@@ -134,9 +157,9 @@ class Classifier:
         X = X[mask]
          
         if self.scale:
-            self.X_train = self._scaler.transform(self.X)
+            self.X_train = self._scaler.transform(X)
 
-        result = self.model.__getattribute__(func)(self.X)
+        result = self.model.__getattribute__(func)(X)
         
         if self.y is not None:
             if self.type == 'classifier':
@@ -184,4 +207,3 @@ class Classifier:
             print(f'f1_score : {self.f1_score}')
         else:
             print('Metrics only avilable for supervised methods')
-        
