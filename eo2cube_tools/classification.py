@@ -14,6 +14,7 @@ from sklearn import metrics
 from sklearn.base import is_classifier, is_regressor
 import rasterio
 import geopandas as gpd
+from sklearn import preprocessing
 
 def rasterize(gdf,da,attribute,):    
     crs = da.geobox.crs
