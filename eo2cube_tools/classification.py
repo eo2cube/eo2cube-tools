@@ -103,7 +103,7 @@ class Classifier:
 
     def extract_Xy(self, ds, labels=None, attribute=None):
         if labels is not None:
-            if 'GeoDataFrame' in str(type(gdf)):
+            if 'GeoDataFrame' in str(type(labels)):
                 if attribute is not None:
                     labels = extract_samples(ds, labels, attribute)
                 else:
