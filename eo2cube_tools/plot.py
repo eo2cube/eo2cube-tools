@@ -100,7 +100,7 @@ def plot_band(
         
         @pm.depends('time', 'band','data_opacity', on_init=True)
         def update_image(self):
-            b = band(wm_dataset, band = self.band, time = self.time, dims=['x','y'], nodata= 0)
+            b = band(wm_dataset, band = self.band, time = self.time, dims = ['x','y'], nodata = nodata)
             b.calc_band()
             return (shade(regrid(b.view,dynamic=False),dynamic=False, cmap=cmap, clims=clims).opts(alpha=self.data_opacity)) 
         
@@ -115,7 +115,8 @@ def plot_band(
 def plot_rgb(
     dataset,
     bands=["blue", "green", "red"],
-    dims=["x", "y"]
+    dims=["x", "y"],
+    nodata = 0
 ):
 
     """Interactive RGB visualization of a xarray time series
@@ -184,7 +185,7 @@ def plot_rgb(
         
         @pm.depends('time', 'red','green','blue','data_opacity', on_init=True)
         def update_image(self):
-            b = rgb(wm_dataset, red = self.red, blue = self.blue, green = self.green, time = self.time, dims=['x','y'], nodata= 0)
+            b = rgb(wm_dataset, red = self.red, blue = self.blue, green = self.green, time = self.time, dims = ['x','y'], nodata= nodata)
             b.calc_rgb()
             return (regrid(b.view,dynamic=False)).opts(alpha=self.data_opacity)
         
