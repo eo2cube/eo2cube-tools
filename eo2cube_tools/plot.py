@@ -35,16 +35,6 @@ def normalize_data(agg):
     return out
 
 
-import xarray as xr
-import os, colorcet, param as pm, holoviews as hv, panel as pn, datashader as ds
-import numpy as np
-import geoviews as gv
-import geoviews.tile_sources as gts
-from collections import OrderedDict as odict
-import rioxarray
-import numpy as np
-from holoviews.operation.datashader import regrid, shade
-
 def plot_band(
     dataset,
     dims=["x", "y"],
@@ -125,21 +115,13 @@ def plot_band(
 def plot_rgb(
     dataset,
     bands=["blue", "green", "red"],
-    dims=["x", "y"],
-    height=700,
-    width=700,
-    clims=None,
-    norm="eq_hist",
-    cmap=["black", "white"],
-    nodata=1,
+    dims=["x", "y"]
 ):
 
     """Interactive RGB visualization of a xarray time series
-
     Description
     ----------
     Takes an xarray time dataset and creates an interactive panel which allows to inspect the different data variables at different time steps
-
     Parameters
     ----------
     dataset : xarray.Dataset
@@ -148,93 +130,69 @@ def plot_rgb(
         A list of names defining the data variables used for the red, green and blue band
     dim : list, str
         A list containing the names of the x and y dimension.
-    height: int
-        Height of the created plot specified in pixels.
-    width: int
-        Width of the created plot specified in pixels.
-    clims: int,float
-        Min and max data values to use for colormap interpolation.
-    norm :
-        The normalization operation applied before colormapping. Valid options include 'linear', 'log', 'eq_hist', 'cbrt'.
-    cmap : list, str
-        Used for the colormap of single-layer datashader output.
-    nodata: int
-        Value defining the nodata value for the dataset
-
     """
-
+    
     pn.extension()
+    wm_dataset = dataset.rio.reproject("EPSG:3857", nodata=np.nan)
+    maps   = ['EsriImagery','EsriNatGeo', 'EsriTerrain', 'OSM']
+    bases  = odict([(name, gts.tile_sources[name].relabel(name)) for name in maps])
+    gopts  = hv.opts.WMTS(responsive=True, xaxis=None, yaxis=None, bgcolor='black', show_grid=False)
+    times   = [np.datetime64(ts) for ts in dataset.time.values]
+    bands   = [var for var in dataset.data_vars]
+    
+    class rgb():
+        def __init__(self, dataset, red, green, blue, time, dims=dims, nodata=nodata):
+            self.r = red
+            self.g = green
+            self.b = blue
+            self.dataset = dataset
+            self.time = time
+            self.dims = dims
+            self.nodata = nodata
 
-    list_vars = []
-    time_list = []
-
-    for ts in dataset.time.values:
-        ts = pd.Timestamp(ts).to_pydatetime("%Y-%M-%D")
-        time_list.append(ts)
-
-    for var in dataset.data_vars:
-        list_vars.append(var)
-
-    r_select = pn.widgets.Select(name="R", value="red", options=list_vars)
-    g_select = pn.widgets.Select(name="G", value="green", options=list_vars)
-    b_select = pn.widgets.Select(name="B", value="blue", options=list_vars)
-    time_select = pn.widgets.Select(name="Time", value=time_list[0], options=time_list)
-
-    def combine_bands(r, g, b, time):
-        xs, ys = dataset[r].sel(time=time)[dims[0]], dataset[r].sel(time=time)[dims[1]]
-        r, g, b = [
-            ds.utils.orient_array(img)
-            for img in (
-                dataset[r].sel(time=time),
-                dataset[g].sel(time=time),
-                dataset[b].sel(time=time),
-            )
-        ]
-        a = (np.where(np.logical_or(np.isnan(r), r <= nodata), 0, 255)).astype(np.uint8)
-        r = (normalize_data(r)).astype(np.uint8)
-        g = (normalize_data(g)).astype(np.uint8)
-        b = (normalize_data(b)).astype(np.uint8)
-        return (
-            regrid(hv.RGB((xs, ys[::-1], r, g, b, a), vdims=list("RGBA")))
-            .redim(x=dims[0], y=dims[1])
-            .opts(width=width, height=height)
+        def calc_rgb(self):
+            xs, ys = self.dataset[self.r].sel(time=self.time)[self.dims[0]], self.dataset[self.r].sel(time=self.time)[self.dims[1]]
+            r, g, b = [
+                ds.utils.orient_array(img)
+                for img in (
+                    self.dataset[self.r].sel(time=self.time),
+                    self.dataset[self.g].sel(time=self.time),
+                    self.dataset[self.b].sel(time=self.time),
+                )
+            ]
+            a = (np.where(np.logical_or(np.isnan(r), r <= nodata), 0, 255)).astype(np.uint8)
+            r = (normalize_data(r)).astype(np.uint8)
+            g = (normalize_data(g)).astype(np.uint8)
+            b = (normalize_data(b)).astype(np.uint8)
+            self.view = hv.RGB((xs, ys[::-1], r, g, b, a), vdims=list("RGBA"))
+            return (
+                hv.RGB((xs, ys[::-1], r, g, b, a), vdims=list("RGBA"))
         )
-
-    def on_r_select(event):
-        var = event.obj.value
-        col[-1] = combine_bands(
-            r=r_select.value, b=b_select.value, g=g_select.value, time=time_select.value
-        )
-
-    def on_b_select(event):
-        var = event.obj.value
-        col[-1] = combine_bands(
-            r=r_select.value, b=b_select.value, g=g_select.value, time=time_select.value
-        )
-
-    def on_g_select(event):
-        var = event.obj.value
-        col[-1] = combine_bands(
-            r=r_select.value, b=b_select.value, g=g_select.value, time=time_select.value
-        )
-
-    def on_time_select(event):
-        time = event.obj.value
-        col[-1] = combine_bands(
-            r=r_select.value, b=b_select.value, g=g_select.value, time=time_select.value
-        )
-
-    r_select.param.watch(on_r_select, parameter_names=["value"])
-    g_select.param.watch(on_r_select, parameter_names=["value"])
-    b_select.param.watch(on_r_select, parameter_names=["value"])
-    time_select.param.watch(on_time_select, parameter_names=["value"])
-
-    col = pn.Row(
-        pn.Column(pn.WidgetBox(r_select, g_select, b_select, time_select)),
-        combine_bands(
-            r=r_select.value, b=b_select.value, g=g_select.value, time=time_select.value
-        ),
-    )
+                                                                                                                              
+    class rgbExplorer(pm.Parameterized):
+        red = pm.Selector(bands, default= bands[0])
+        green = pm.Selector(bands, default= bands[1])
+        blue = pm.Selector(bands, default= bands[2])
+        time = pm.Selector(times, default=times[0])
+        basemap = pm.Selector(bases)
+        data_opacity = pm.Magnitude(1.00)
+        map_opacity = pm.Magnitude(1.00)
+        
+        @pm.depends('map_opacity', 'basemap')
+        def tiles(self):
+            return self.basemap.opts(gopts).opts(alpha=self.map_opacity)
+        
+        @pm.depends('time', 'red','green','blue','data_opacity', on_init=True)
+        def update_image(self):
+            b = rgb(wm_dataset, red = self.red, blue = self.blue, green = self.green, time = self.time, dims=['x','y'], nodata= 0)
+            b.calc_rgb()
+            return (regrid(b.view,dynamic=False)).opts(alpha=self.data_opacity)
+        
+        def view(self):
+            return hv.DynamicMap(self.tiles) * hv.DynamicMap(self.update_image)
+    
+    explorer = rgbExplorer(name = 'Image Explorer')    
+    col = pn.Row(pn.panel(explorer.param), explorer.view())
     return col
 
 
