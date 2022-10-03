@@ -41,7 +41,7 @@ def plot_band(
     clims=None,
     norm="eq_hist",
     cmap=["black", "white"],
-    nodata=1,
+    nodata=0,
 ):
     """Interactive visualization of xarray time series
     Description
@@ -64,7 +64,7 @@ def plot_band(
     """
     
     pn.extension()
-    wm_dataset = dataset.rio.reproject("EPSG:3857", nodata=np.nan)
+    wm_dataset = dataset.rio.reproject("EPSG:3857", nodata=nodata)
     maps   = ['EsriImagery','EsriNatGeo', 'EsriTerrain', 'OSM']
     bases  = odict([(name, gts.tile_sources[name].relabel(name)) for name in maps])
     gopts  = hv.opts.WMTS(responsive=True, xaxis=None, yaxis=None, bgcolor='black', show_grid=False)
@@ -134,7 +134,7 @@ def plot_rgb(
     """
     
     pn.extension()
-    wm_dataset = dataset.rio.reproject("EPSG:3857", nodata=np.nan)
+    wm_dataset = dataset.rio.reproject("EPSG:3857", nodata=nodata)
     maps   = ['EsriImagery','EsriNatGeo', 'EsriTerrain', 'OSM']
     bases  = odict([(name, gts.tile_sources[name].relabel(name)) for name in maps])
     gopts  = hv.opts.WMTS(responsive=True, xaxis=None, yaxis=None, bgcolor='black', show_grid=False)
