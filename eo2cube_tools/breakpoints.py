@@ -421,7 +421,7 @@ class beastmaster():
         self.cpOccPr = self.trend.cpOccPr
         self.cp = self.trend.cp
         self.cpPr = self.trend.cpPr
-        self.cpAbruptChange = self.trend.cpAbruptChang
+        self.cpAbruptChange = self.trend.cpAbruptChange
         self.cpCI = self.trend.cpCI
         self.Y = self.trend.Y
         self.SD = self.trend.SD
