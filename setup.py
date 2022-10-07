@@ -16,7 +16,6 @@ setup(
     url="https://github.com/eo2cube/eo2cube-tools",
     packages=find_packages(),
     install_requires=requirements,
-    dependency_links=dependency_links,
     classifiers=[
         "Programming Language :: Python :: 3.10",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
