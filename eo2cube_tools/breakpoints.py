@@ -473,7 +473,7 @@ class beastmaster():
         return self.out
     
     def plot(self):
-        rb.plot(o[10,11])
+        rb.plot(self.out[10,11])
 
     def print_params(self):
         if len(self.metadata.__dict__) >= 0:
