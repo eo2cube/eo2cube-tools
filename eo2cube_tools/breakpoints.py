@@ -357,6 +357,7 @@ class beastmaster():
         self.metadata.deseasonalize = deseasonalize
         self.metadata.detrend = detrend
         self.metadata.hasOutlierCmpnt  = hasOutlier
+        self.metadata.whichDimIsTime = whichDimIsTime
 
    
         #init prior
@@ -503,4 +504,5 @@ class beastmaster():
         for key in self.extra.__dict__.keys():
             print(f'{key} : {self.extra.__dict__[key]}')
         print('--------------------------------------------------------')
+
 
