@@ -1,23 +1,24 @@
 import Rbeast as rb
 
 class beastmaster():
-    def __init__(self, 
+    def __init__(self,
+                 startTime = 1871.0, 
+                 deltaTime = 1.0,  
                  isRegularOrdered = True, 
                  time = None, 
                  whichDimIsTime = 1, 
-                 startTime = 1871.0, 
-                 period = 1.0,
-                 deltaTime = 1.0, 
                  freq = None,
                  missingValue = float('nan'), 
                  season = 'none',  
                  maxMissingRate = 0.7500,
-                 seasonMinMaxOrder = (0,1), 
-                 seasonMinMaxKnotOrder = (0,3), 
-                 seasonMinSepDist = 10,
-                 trendMinMaxOrder = (0,1),
-                 trendMinMaxKnotNum  = (0,15), 
-                 trendMinSepDist  = 5, 
+                 detrend        = False,
+                 deseasonalize  = False,
+                 sorder_minmax = [0,5], 
+                 scp_minmax = [0,10], 
+                 sseg_minlength = None,
+                 torder_minmax = [0,1],
+                 tcp_minmax  = [0,10], 
+                 tseg_minlength  = None, 
                  precValue = 1.5, 
                  precPriorType = 'uniform', 
                  seed = 9543434, 
@@ -27,7 +28,7 @@ class beastmaster():
                  chainNumber  = 3, 
                  maxMoveStepSize  = 4, 
                  trendResamplingOrderProb = 0.100, 
-                 seasonResamplingOrderProb = 0.100, 
+                 seasonResamplingOrderProb = 0.1700, 
                  credIntervalAlphaLevel = 0.950, 
                  dumpInputData = False,
                  whichOutputDimIsTime = 1, 
@@ -42,6 +43,7 @@ class beastmaster():
                  tallyPosNegSeasonJump= False, 
                  tallyPosNegTrendJump = False, 
                  tallyIncDecTrendJump = False, 
+                 hasOutlier = False,
                  printProgressBar = True, 
                  printOptions = True, 
                  consoleWidth = 0, 
@@ -75,6 +77,13 @@ class beastmaster():
         BEAST's Bayesian formulation but just some additional info to interpret Y. Below are possible fields in metadata; 
         not all of them are always needed, depending on the types of inputs (e.g., 1D, 2D or 3D; regular or irregular).
         
+        startTime: float
+            number (default to 1.0) or Date; the time of the 1st datapoint of y. It can be specified as a scalar (e.g., 2021.0644)
+            , a vector of three values in the order of Year, Month, and Day (e.g., [2021,1,24] )
+        deltaTime: float
+            specifies the time interval between consecutive data points. It is optional for regular data 
+            (default to 1.0 if not supplied), but has to be specified for irregular data because deltaTime is needed 
+            to aggregate/resample the irregular time series into regular ones.
         isRegularOrdered: bool
             If TRUE, the dataset is assumed to be regular and if FALSE,dataset is irregular or regular but unordered 
             in time.           
@@ -89,13 +98,6 @@ class beastmaster():
                specifies the which dimension of a multideimensional dataset is time. For example, whichDimIsTime = 1 for a 
                190x35 2D input indicates 35 time series of length 190 each; whichDimIsTime = 2 for a 100x200x300 3D input 
                indicates 30000=100*300 time series of length 200 each.
-        startTime: float
-            number (default to 1.0) or Date; the time of the 1st datapoint of y. It can be specified as a scalar (e.g., 2021.0644)
-            , a vector of three values in the order of Year, Month, and Day (e.g., [2021,1,24] )
-        deltaTime: float
-            specifies the time interval between consecutive data points. It is optional for regular data 
-            (default to 1.0 if not supplied), but has to be specified for irregular data because deltaTime is needed 
-            to aggregate/resample the irregular time series into regular ones.
         freq: integer. 
             Needed only for data with a periodic/cyclic component (i.e., season='harmonic' or 'dummy' ) and ignored for 
             trend-only data (i.e., season='none'). The "freq" parameter must be an INTEGER specifying 
@@ -111,6 +113,11 @@ class beastmaster():
                         by the user through freq. By default, the periodic component is modeled as a harmonic curve a combination of sins and cosines.
             'dummy':    the same as 'harmonic' except that the periodic/seasonal component is modeled as a non-parametric curve. The harmonic order 
                         arg sorder.minmax is irrelevant and is ignored.
+        deseasonalize: bool
+            if true, the input ts is first de-seasonalize by removing a global seasonal component, prior to applying BEAST
+        detrend: bool
+            if true, the input ts is first de-trended by removing a global trend component, prior to applying BEAST
+
         # Hyperprior Paramaters
         --------------------------------------------
 
@@ -118,12 +125,12 @@ class beastmaster():
         result may be sensitive to the choices of these hyperparameters. 
         Below are possible parameters:     
         
-        seasonMinMaxOrder: tuple
+        sorder_minmax: list
                 The min and max harmonic orders considered to fit the seasonal component. s
                 seasonMinMaxOrder is only used if the time series has a seasonal component (i.e., season='harmonic') and ignored for 
                 trend-only data or when season='dummy'. If min(seasonMinMaxOrder) == max(seasonMinMaxOrder) , BEAST assumes a constant 
                 harmonic order used and won't infer the posterior probability of harmonic orders.
-        seasonMinMaxKnotOrder: tuple
+        scp_minmax: list
             the min and max number of seasonal changepints allowed in segmenting and fitting the seasonal component. 
             seasonMinMaxKnotNum is only used if the time series has a seasonal component (i.e., season='harmonic' or season='dummy')
             and ignored for trend-only data. If "minimum order" == "maximum order", BEAST assumes a constant number of
@@ -131,21 +138,21 @@ class beastmaster():
             the occurance probability of the changepoints over time (i.e., the most likely times at which these changepoints occur). If 
             min(seasonMinMaxOrder)=max(seasonMaxOrder)=0, no changepoints are allowed in the seasonal component; then a global harmonic model 
             is used to fit the seasonal component.
-        seasonMinSepDist: int
+        sseg_minlength: int
             he min seperation time between two neighboring season changepoints. That is, when fitting a piecewise harmonic seasonal 
             model, no two changepoints are allowed to occur within a time window of seasonMinSepDist. seasonMinSepDist must be an 
             unitless integer–the number of time intervals/data points so that the time window in the original unit is seasonMinSepDist*deltaTime.
-        trendMinMaxOrder: tuple
+        torder_minmax: list
             he min and max orders of the polynomials considered to fit the trend component. The zero-th order corresponds to a constant 
             term/ a flat line and the 1st order is a line. If min(trendMinMaxOrder) = max(trendMinMaxOrder), BEAST assumes a constant 
             polynomial order used and won't infer the posterior probability of polynomial orders.
-        trendMinMaxKnotOrder: tuple
+        tcp_minmax: list
             the min and max number of trend changepoints allowed in segmenting and fitting the trend component. 
             If min(trendMinMaxOrder) = max(trendMinMaxOrder), BEAST assumes a constant number of changepoints in the fitted trend and won't infer
             the posterior probability of the number of trend changepoints, but it will still estimate the occurrence probability of the 
             changepoints over time (i.e., the most likely times at which these changepoints occur). If trendMinOrder=trendMaxOrder=0, 
             no changepoints are allowed in the trend component; then a global polynomial model is used to fit the trend.
-        trenMinSepDist: int
+        tseg_minlength: int
             the min separation time between two neighboring trend changepoints.
         prior$precValue: numeric 
             the default value is 10.
@@ -335,29 +342,38 @@ class beastmaster():
         
         ## init metadata
         self.metadata = rb.args()
+    
         self.metadata.time = time
         self.metadata.isRegularOrdered = isRegularOrdered
         self.metadata.season = season
         self.metadata.startTime = startTime
         self.metadata.deltaTime = deltaTime
-        self.metadata.period = period
-        self.metadata.whichDimIsTime = whichDimIsTime
+        self.metadata.freq = freq
+        if (self.season != 'none'):
+            self.metadata.period = self.metadata.deltaTime * self.metadata.freq
         self.metadata.missingValue = missingValue
         self.metadata.maxMissingRate = maxMissingRate
         self.metadata.freq = freq
+        self.metadata.deseasonalize = deseasonalize
+        self.metadata.detrend = detrend
+        self.metadata.hasOutlierCmpnt  = hasOutlier
+
    
         #init prior
         self.prior = rb.args()
-        self.prior.seasonMinOrder = seasonMinMaxOrder[0]
-        self.prior.seasonMaxOrder = seasonMinMaxOrder[1]
-        self.prior.seasonMinKnotNum = seasonMinMaxKnotOrder[0]
-        self.prior.seasonMaxKnotNum = seasonMinMaxKnotOrder[1]
-        self.prior.seasonMinSepDist = seasonMinSepDist
-        self.prior.trendMinOrder = trendMinMaxOrder[0]
-        self.prior.trendMaxOrder = trendMinMaxOrder[1]
-        self.prior.trendMinKnotNum = trendMinMaxKnotNum[0]
-        self.prior.trendMaxKnotNum = trendMinMaxKnotNum[1]
-        self.prior.trendMinSepDist = trendMinSepDist
+        self.prior.modelPriorType	  = 1
+        if season !='none' or season == None:
+            self.prior.seasonMinOrder   = sorder_minmax[0]
+            self.prior.seasonMaxOrder   = sorder_minmax[1]
+            self.prior.seasonMinKnotNum = scp_minmax[0]
+            self.prior.seasonMaxKnotNum = scp_minmax[1]
+            self.prior.seasonMinSepDist = sseg_minlength
+        self.prior.trendMinOrder	  = torder_minmax[0]
+        self.prior.trendMaxOrder	  = torder_minmax[1]
+        self.prior.trendMinKnotNum  = tcp_minmax[0]
+        self.prior.trendMaxKnotNum  = tcp_minmax[1]
+        self.prior.trendMinSepDist  = tseg_minlength
+        self.prior.K_MAX            = 500
         self.prior.precValue = precValue
         self.prior.precPriorType = precPriorType
         
@@ -370,6 +386,7 @@ class beastmaster():
         self.mcmc.chainNumber = chainNumber
         self.mcmc.maxMoveStepSize = maxMoveStepSize
         self.mcmc.trendResamplingOrderProb = trendResamplingOrderProb
+        self.mcmc.seasonResamplingOrderProb = seasonResamplingOrderProb
         self.mcmc.credIntervalAlphaLevel = credIntervalAlphaLevel 
         
         #init extra
@@ -381,6 +398,9 @@ class beastmaster():
         self.extra.computeTrendOrder = computeTrendOrder
         self.extra.computeTrendChngpt = computeTrendChngpt
         self.extra.computeTrendSlope = computeTrendSlope
+        self.extra.computeSeasonOrder = computeSeasonOrder
+        self.extra.computeSeasonChngpt = computeSeasonChngpt
+        self.extra.computeSeasonAmp = computeSeasonAmp
         self.extra.tallyPosNegTrendJump = tallyPosNegTrendJump
         self.extra.tallyIncDecTrendJump = tallyIncDecTrendJump 
         self.extra.printProgressBar = printProgressBar
@@ -421,24 +441,26 @@ class beastmaster():
         self.cpOccPr = self.trend.cpOccPr
         self.cp = self.trend.cp
         self.cpPr = self.trend.cpPr
-        self.cpAbruptChange = self.trend.cpAbruptChange
+        self.cpAbruptChange = self.trend.cpAbruptChang
         self.cpCI = self.trend.cpCI
         self.Y = self.trend.Y
         self.SD = self.trend.SD
-        self.season = self.season
-        self.ncp = self.season.ncp
-        self.ncp_median = self.season.ncp_median
-        self.ncp_mode = self.season.ncp_mode
-        self.ncp_pct90 = self.season.ncp_pct90
-        self.ncp_pct10 = self.season.ncp_pct10
-        self.ncpPr = self.season.ncpPr
-        self.cpOccPr = self.season.cpOccPr
-        self.cp = self.season.cp
-        self.cpPr = self.season.cpPr
-        self.cpAbruptChange = self.season.cpAbruptChange
-        self.cpCIr = self.season.cpCI
-        self.Y = self.season.Y
-        self.SD = self.season.SD
+
+        if self.season !='none' or self.eason == None:
+            self.season = self.season
+            self.ncp = self.season.ncp
+            self.ncp_median = self.season.ncp_median
+            self.ncp_mode = self.season.ncp_mode
+            self.ncp_pct90 = self.season.ncp_pct90
+            self.ncp_pct10 = self.season.ncp_pct10
+            self.ncpPr = self.season.ncpPr
+            self.cpOccPr = self.season.cpOccPr
+            self.cp = self.season.cp
+            self.cpPr = self.season.cpPr
+            self.cpAbruptChange = self.season.cpAbruptChange
+            self.cpCIr = self.season.cpCI
+            self.Y = self.season.Y
+            self.SD = self.season.SD
         self.whichOutDimIsTime = self.out.whichOutDimIsTime
         self.nrows = self.out.nrows
         self.ncols = self.out.ncols
@@ -481,3 +503,4 @@ class beastmaster():
         for key in self.extra.__dict__.keys():
             print(f'{key} : {self.extra.__dict__[key]}')
         print('--------------------------------------------------------')
+
