@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as readme_file:
     readme = readme_file.read()
 
-requirements = ["xarray>=0.18", "rasterio>=1.2", "pandas>=1.2", "geopandas>=0.9","folium>=0.12.1", "dask>=2021 ", "holoviews>=1.14","datashader>=0.12","bokeh>=2.2","panel>=0.11"]
+requirements = ["xarray>=0.18", "rasterio>=1.2", "pandas>=1.2", "geopandas>=0.9","folium>=0.12.1", "dask>=2021 ", "holoviews>=1.14","datashader>=0.12","bokeh>=2.2","panel>=0.11", "Rbeast"]
 
 
 setup(
