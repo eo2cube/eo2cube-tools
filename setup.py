@@ -5,7 +5,6 @@ with open("README.md", "r") as readme_file:
 
 requirements = ["xarray>=0.18", "rasterio>=1.2", "pandas>=1.2", "geopandas>=0.9","folium>=0.12.1", "dask>=2021 ", "holoviews>=1.14","datashader>=0.12","bokeh>=2.2","panel>=0.11", "Rbeast"]
 
-
 setup(
     name="eo2cube_tools",
     version="0.0.1",
@@ -17,6 +16,7 @@ setup(
     url="https://github.com/eo2cube/eo2cube-tools",
     packages=find_packages(),
     install_requires=requirements,
+    dependency_links=dependency_links,
     classifiers=[
         "Programming Language :: Python :: 3.10",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
