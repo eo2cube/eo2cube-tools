@@ -349,7 +349,7 @@ class beastmaster():
         self.metadata.startTime = startTime
         self.metadata.deltaTime = deltaTime
         self.metadata.freq = freq
-        if (self.season != 'none'):
+        if self.metadata.season != 'none' or self.metadata.season != None:
             self.metadata.period = self.metadata.deltaTime * self.metadata.freq
         self.metadata.missingValue = missingValue
         self.metadata.maxMissingRate = maxMissingRate
@@ -447,7 +447,7 @@ class beastmaster():
         self.Y = self.trend.Y
         self.SD = self.trend.SD
 
-        if self.season !='none' or self.eason == None:
+        if self.metadata.season !='none' or self.metadata.season == None:
             self.season = self.season
             self.ncp = self.season.ncp
             self.ncp_median = self.season.ncp_median
@@ -504,5 +504,6 @@ class beastmaster():
         for key in self.extra.__dict__.keys():
             print(f'{key} : {self.extra.__dict__[key]}')
         print('--------------------------------------------------------')
+
 
 
