@@ -349,8 +349,9 @@ class beastmaster():
         self.metadata.startTime = startTime
         self.metadata.deltaTime = deltaTime
         self.metadata.freq = freq
-        if self.metadata.season !='none' or self.metadata.season == None:
-            self.metadata.period = self.metadata.deltaTime * self.metadata.freq
+        if season !='none' or season == None:
+            period = deltaTime * freq
+            self.metadata.period = period
         self.metadata.missingValue = missingValue
         self.metadata.maxMissingRate = maxMissingRate
         self.metadata.freq = freq
