@@ -7,7 +7,7 @@ class beastmaster():
                  isRegularOrdered = True, 
                  time = None, 
                  whichDimIsTime = 1, 
-                 freq = None,
+                 freq = float('nan'),
                  missingValue = float('nan'), 
                  season = 'none',  
                  maxMissingRate = 0.7500,
@@ -40,7 +40,7 @@ class beastmaster():
                  computeTrendChngpt = True, 
                  computeSeasonAmp = False, 
                  computeTrendSlope = False,
-                 tallyPosNegSeasonJump= False, 
+                 tallyPosNegSeasonJump = False, 
                  tallyPosNegTrendJump = False, 
                  tallyIncDecTrendJump = False, 
                  hasOutlier = False,
@@ -349,7 +349,7 @@ class beastmaster():
         self.metadata.startTime = startTime
         self.metadata.deltaTime = deltaTime
         self.metadata.freq = freq
-        if self.metadata.season != 'none' or self.metadata.season != None:
+        if self.metadata.season !='none' or self.metadata.season == None:
             self.metadata.period = self.metadata.deltaTime * self.metadata.freq
         self.metadata.missingValue = missingValue
         self.metadata.maxMissingRate = maxMissingRate
@@ -363,7 +363,7 @@ class beastmaster():
         #init prior
         self.prior = rb.args()
         self.prior.modelPriorType	  = 1
-        if season !='none' or season == None:
+        if self.metadata.season !='none' or self.metadata.season == None:
             self.prior.seasonMinOrder   = sorder_minmax[0]
             self.prior.seasonMaxOrder   = sorder_minmax[1]
             self.prior.seasonMinKnotNum = scp_minmax[0]
@@ -402,6 +402,7 @@ class beastmaster():
         self.extra.computeSeasonOrder = computeSeasonOrder
         self.extra.computeSeasonChngpt = computeSeasonChngpt
         self.extra.computeSeasonAmp = computeSeasonAmp
+        self.extra.tallyPosNegSeasonJump = tallyPosNegSeasonJump
         self.extra.tallyPosNegTrendJump = tallyPosNegTrendJump
         self.extra.tallyIncDecTrendJump = tallyIncDecTrendJump 
         self.extra.printProgressBar = printProgressBar
