@@ -2,9 +2,9 @@ import rasterio.features
 import xarray as xr
 
 
-def clip_xr2gpd(dataset, gpd):
+def mask(dataset, gpd, dims):
     """
-    Clips a xArray Dataset to a GeoPandasDataframe.
+    Mask a xArray Dataset to a GeoPandasDataframe.
 
     Description
     ----------
@@ -18,23 +18,27 @@ def clip_xr2gpd(dataset, gpd):
     gpd: geopandas.Geodataframe
         A geodataframe object with one or more observations or variables and a geometry column. A filterd geodataframe
         can also be used as input.
-
+      
+    dims: list, str
+        A list containing the names of the x and y dimension.
+          
     Returns
     -------
     masked_dataset: xr.Dataset
         A xr.Dataset like the input dataset with only pixels which are within the polygons of the geopandas.Geodataframe.
         Every other pixel is given the value NaN.
     """
-
-    # selects geometry of the desired gpd and formsa boolean mask from it
+    x = dims[0]
+    y = dims[1]
+    # selects geometry of the desired gpd and forms a boolean mask from it
     ShapeMask = rasterio.features.geometry_mask(
         gpd.loc[:, "geometry"],
-        out_shape=(len(dataset.latitude), len(dataset.longitude)),
+        out_shape=(len(dataset['y']), len(dataset['x'])),
         transform=dataset.geobox.transform,
         invert=True,
     )
     ShapeMask = xr.DataArray(
-        ShapeMask, dims=("latitude", "longitude")
+        ShapeMask, dims=(y, x)
     )  # converts boolean mask into an xArray format
     masked_dataset = dataset.where(
         ShapeMask == True

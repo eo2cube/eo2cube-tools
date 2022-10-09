@@ -1,4 +1,11 @@
 import Rbeast as rb
+import Rbeast.Rbeast as cb
+import matplotlib.pyplot as plt
+from matplotlib import __version__  as version
+from numpy import ndarray, min, max,ndarray,flip, isnan, round, sum, arange
+from numpy import concatenate as c, array as np_array, where as np_where, sqrt as np_sqrt
+
+import warnings
 
 class beastmaster():
     def __init__(self,
@@ -286,7 +293,7 @@ class beastmaster():
         beastmaster.sig2	
             numeric; the estimated variance of the model error.
 
-        beastmaster.trend	
+        beastmaster.trend
             an object consisting of various outputs related to the estimated trend component:
                 - ncp: [Number of ChangePoints]. a numeric scalar; the mean number of trend changepoints. Individual models sampled by BEAST 
                         has a varying dimension (e.g., number of changeponts or knots), so several alternative statistics (e.g., ncp_mode, ncp_median, 
@@ -319,7 +326,7 @@ class beastmaster():
                 - SD: [Standard Deviation] a vector of length N; the estimated standard deviation of the estimated trend component.
 
                 
-        beastmaster.season	
+        beastmaster.season
             a list object numeric consisting of various outputs related to the estimated seasonal/periodic component:
             - ncp:   [Number of ChangePoints]. a numeric scalar; the mean number of seasonal changepoints.
             - ncpPr: [Probability of the Number of ChangePoints]. A vector of length (prior$seasonMaxKnotNum+1). It gives a probability distribution of having a 
@@ -411,6 +418,10 @@ class beastmaster():
         self.extra.consoleWidth = consoleWidth
         self.extra.numThreadsPerCPU = numThreadsPerCPU
         self.extra.numParThreads = numParThreads
+    
+    def beast(self):
+        o = cb.Rbeast('beastv4',self.dataset, self.metadata, self.prior, self.mcmc, self.extra)
+        return o
         
     def beastrunner(self, dataset):
         """
@@ -423,57 +434,474 @@ class beastmaster():
         """
         self.dataset = dataset
         self.ndims = self.dataset.ndim
-        if self.ndims == 1 and self.isRegularOrdered == True:
-            self.out = rb.beast(self.dataset, self.metadata, self.prior, self.mcmc, self.extra)
-        elif self.ndims == 1 and self.isRegularOrdered == False:
-            self.out = rb.beast_irreg(self.dataset, self.metadata, self.prior, self.mcmc, self.extra)
-        elif self.ndims >= 1:
-            self.out = rb.beast123(self.dataset, self.metadata, self.prior, self.mcmc, self.extra)
-
-        self.time = self.out.time
-        self.marg_lik = self.out.marg_lik
-        self.R2 = self.out.R2
-        self.RMSE = self.out.RMSE
-        self.sig2 = self.out.sig2
-        self.trend = self.out.trend
-        self.ncp = self.trend.ncp
-        self.ncp_median = self.trend.ncp_median
-        self.ncp_mode = self.trend.ncp_mode
-        self.ncp_pct90 = self.trend.ncp_pct90
-        self.ncp_pct10 = self.trend.ncp_pct10
-        self.cpOccPr = self.trend.cpOccPr
-        self.cp = self.trend.cp
-        self.cpPr = self.trend.cpPr
-        self.cpAbruptChange = self.trend.cpAbruptChange
-        self.cpCI = self.trend.cpCI
-        self.Y = self.trend.Y
-        self.SD = self.trend.SD
-
-        if self.metadata.season !='none' or self.metadata.season == None:
-            self.season = self.season
-            self.ncp = self.season.ncp
-            self.ncp_median = self.season.ncp_median
-            self.ncp_mode = self.season.ncp_mode
-            self.ncp_pct90 = self.season.ncp_pct90
-            self.ncp_pct10 = self.season.ncp_pct10
-            self.ncpPr = self.season.ncpPr
-            self.cpOccPr = self.season.cpOccPr
-            self.cp = self.season.cp
-            self.cpPr = self.season.cpPr
-            self.cpAbruptChange = self.season.cpAbruptChange
-            self.cpCIr = self.season.cpCI
-            self.Y = self.season.Y
-            self.SD = self.season.SD
-        self.whichOutDimIsTime = self.out.whichOutDimIsTime
-        self.nrows = self.out.nrows
-        self.ncols = self.out.ncols
-        self.season_type = self.out.season_type
+        self.result = self.beast()
+            
+        self.hasData = hasattr(self.result,'data')
+        self.hasSeason = hasattr(self.result,'season')
+        if self.hasSeason:
+            self.hasSOrder = hasattr(self.result.season,'order')
+            self.hasAmp = hasattr(self.result.season,'amp')
+        else:
+            self.hasSOrder = False;
+            self.hasAmp    = False;
+        self.hasOutlier = hasattr(self.result,'outlier')
+        self.hasTOrder = hasattr(self.result.trend,'order')
+        self.hasSlp = hasattr(self.result.trend,'slp')
     
-    def get_result(self):
-        return self.out
+    def extract(self, index):
+        """    
+       index: if out contains results for more than 1 time
+            series, index specifies for which time series the result is extracted.
+            If out is the result for a 3D stacked cube, index will be a vector of 2
+            integer to specify the row and col of the desired pixel. If out contains
+            only one time series, index will be ignored
+        """
+        if len(self.result.marg_lik) == 1:
+            return self.result
+        else:
+            if isinstance(index, int):
+                 index=index+1
+            else:
+                 index = [x+1 for x in index]  
+            return cb.Rbeast('tsextract', self.result, index);
+        
+    def isempty(self,obj):
+        if obj is None:
+            return True
+        if isinstance(obj, ndarray):
+            return len(obj) == 0
+        if hasattr(obj, '__dict__'):
+            return len(obj.__dict__) == 0
+        return len(obj) == 0
+
     
-    def plot(self):
-        rb.plot(self.out[10,11])
+    def plot(self, index=0,
+         ncpStat    = 'median', 
+         relheights = [],
+         fig        = [], 
+         title      = 'BEAST decompositon and changepoint detection',
+         ylabels    = [],
+         xlabel     = 'time'
+         ):
+        
+        def error(msg):
+            raise ValueError(msg)
+
+        def warning(msg):
+            warnings.warn(msg)
+            
+        variables_list = ['st', 's','scp','sorder', 't','tcp', 'torder', 'error', 'o', 'ocp', 'samp', 'tslp', 'slpsgn', 'error']
+        ylabels_dict = {'st': 'Y', 's': 'season', 't': 'trend', 'o': 'outlier', 'scp': 'Pr(scp)', 'tcp': 'Pr(tcp)', 'ocp': 'Pr(ocp)',
+           'sorder': 'sOrder', 'torder': 'tOrder', 'samp': 'amplitude', 'tslp': 'tslp', 'slpsgn': 'slpsgn',
+           'error': 'error'}
+        colors_dict  = {'st': [0.1, 0.1, 0.1], 's': 'r', 't': 'g', 'o': 'b', 'scp': 'r', 'tcp': 'g', 'ocp': 'b', 'sorder': 'r',
+        'torder': 'g', 'samp': 'r', 'tslp': 'g', 'slpsgn': 'k', 'error': [0.4, 0.4, 0.4]}
+        heights_dict = {'st': 0.8, 's': 0.8, 't': 0.8, 'o': 0.8, 'scp': .5, 'tcp': .5, 'ocp': .5, 'sorder': .5, 'torder': .5,'samp': .4, 'tslp': .4, 'slpsgn': .4, 'error': .4}
+        self.ncpStat = ncpStat
+        if self.hasData is not True:
+            variables_list.remove('error')
+        if self.hasSeason is not True:
+            variables_list.remove('st')
+            variables_list.remove('sorder')
+            variables_list.remove('s')
+            variables_list.remove('scp')
+        if self.hasAmp is not True:
+            variables_list.remove('samp')
+        if self.hasSlp is not True:
+            variables_list.remove('tslp')
+            variables_list.remove('slpsgn')
+        if self.hasSOrder is not True and self.hasSeason == True:
+            variables_list.remove('sorder')
+        if self.hasTOrder is not True:
+            variables_list.remove('torder')
+        if self.hasOutlier is not True:
+            variables_list.remove('o')
+            variables_list.remove('ocp')
+            
+        self.heights = [heights_dict[key] for key in variables_list]
+        ylab =  [ylabels_dict[key] for key in variables_list]
+        col     = [colors_dict[key] for key in variables_list]
+
+        if  len(self.result.marg_lik)> 1 :
+            # more than time series is present
+            self.o=self.extract(index);
+        else:
+            self.o = self.result
+        
+        if isnan(self.o.marg_lik):
+            self.H = [];
+            warning("The result of the selected time series selected is invalid.");
+            return None
+
+        nPlots = len(variables_list)
+
+        if (nPlots == 0):
+            error("No valid variable names speciffied int the 'vars' argument. Possible names include 'st','t','s','sorder','torder','scp','tcp','samp','tslp','o', 'ocp', and 'error'. ")
+        
+        self.leftmargin = 0.1;
+        self.rightmargin = 0.05;
+        self.topmargin = 0.06;
+        self.bottommargin = .08;
+        self.verticalspace = 0.01;
+
+        if self.isempty(fig):
+            self.fig = plt.figure()
+        self.H = self.axeslayout()
+
+        #  #######################################################
+        #  # Create a subplot given the relative heights of the vertical plots
+        #  ########################################################
+        self.t, self.N   = (self.o.time, len(self.o.time))
+        self.t2t    = c( [self.t, flip(self.t)] )
+
+        for i in range(len(variables_list)):
+            self.ytitle, self.var, self.clr, self.h = (ylab[i], variables_list[i],col[i],self.H[i])
+            if self.var == 'st' :
+                self.plot_st()
+            if (self.var == 's'):
+                self.plot_y(mode = 's');
+            if (self.var == 't'):
+                self.plot_y(mode = 't');
+            if (self.var == 'scp'):
+                self.plot_prob(mode = 'scp');
+            if (self.var == 'tcp'):
+                self.plot_prob(mode = 'tcp');
+            if (self.var == 'sorder'):
+                self.plot_order();
+            if (self.var == 'torder'):
+                self.plot_order();
+            if (self.var == 'samp'):
+                self.plot_amp();
+            if (self.var == 'tslp'):
+                self.plot_slp()
+            if (self.var == 'slpsgn'):
+                self.plot_slpsgn()
+            if (self.var == 'o'):
+                self.plot_o();
+            if (self.var == 'ocp'):
+                self.plot_oprob();
+            #if (self.var == 'error'):
+            #    self.plot_error();
+
+            if i % 2 == 0:
+                self.h.yaxis.tick_left()
+            else:
+                self.h.yaxis.tick_right()
+            #https://stackoverflow.com/questions/63723514/userwarning-fixedformatter-should-only-be-used-together-with-fixedlocator
+            #h.set_yticklabels(h.get_yticks(), rotation =90)
+            self.h.tick_params(axis='y', labelrotation = 90)
+
+            if (i == 0):
+                self.fig.suptitle(title);
+
+            if (i == nPlots-1):
+                self.h.set_xlabel(xlabel);
+            else:
+                self.h.set_xlabel([]);
+
+            self.h.set_ylabel(self.ytitle);
+            self.h.yaxis.set_label_position('left')
+            self.h.yaxis.set_label_coords(-0.08, 0.5)
+            #h.yaxis.set_label_position('left')
+            self.fig.show()
+        #return {'fig':fig, 'ax':H}
+        return self.fig, self.H
+    
+    def axeslayout(self):
+        lm = self.leftmargin;
+        rm = self.rightmargin;
+        tm = self.topmargin;
+        bm = self.bottommargin;
+        vd = self.verticalspace;
+        # hLayout = [1 1 - 1 1 1 - 1 1 1];
+        hLayout = np_array(self.heights)
+        winList = np_where(hLayout > 0)[0]  # a tuple returned
+        hgt = (1 - tm - bm - abs(sum(hLayout[hLayout < 0]) * vd)) / sum(hLayout[hLayout > 0]);
+        self.H = [];
+        self.fig.clf()
+        ax = self.fig.subplots(len(winList), 1)  # plt.figure()  fig.add_axes
+        for i in range(len(winList)):
+            # H.append( fig.add_axes([0,i/4.0,1,1]) )
+            idx = winList[i];
+            if i == 0:
+                yup = 1 - tm
+            else:
+                slist = hLayout[arange(1, len(hLayout) + 1) <= idx]
+                slist[slist > 0] = slist[slist > 0] * hgt;
+                slist[slist < 0] = -slist[slist < 0] * vd;
+                yup = 1 - tm - sum(slist);
+            #print([lm, yup - hLayout[idx] * hgt, 1 - rm - lm, hLayout[idx] * hgt])
+
+            ax[i].set_position([lm, yup - hLayout[idx] * hgt, 1 - rm - lm, hLayout[idx] * hgt])
+
+            # set(H(i), 'box', 'on');
+        return ax
+
+    def get_Yts(self):
+        Yts = self.o.trend.Y;
+        SD2 = self.o.trend.SD ** 2 + self.o.sig2[0]
+        if self.hasSeason:
+            Yts, SD2 = (Yts + self.o.season.Y, SD2 + self.o.season.SD ** 2)
+        if self.hasOutlier:
+            Yts, SD2 = (Yts + self.o.outlier.Y, SD2 + self.o.outlier.SD ** 2)
+        SD    = np_sqrt(SD2)
+        tmp   = Yts + SD
+        YtsSD = c([Yts - SD, flip(tmp)])
+        if self.hasData:
+            Yerr = self.o.data - Yts
+        else:
+            Yerr = [];
+        return ((Yts, YtsSD, Yerr))
+
+
+    def get_T(self):
+        Y = self.o.trend.Y;
+        tmp = Y + self.o.trend.SD;
+        SD = c( [Y - self.o.trend.SD, flip(tmp)] )
+        if hasattr(self.o.trend, 'CI'):
+            tmp = self.o.trend.CI[:,1]
+            CI  = c( [self.o.trend.CI[:, 0], flip(tmp) ])
+        else:
+            CI = SD
+        if self.hasSlp:
+            Slp   = self.o.trend.slp;
+            tmp   = Slp + self.o.trend.slpSD;
+            SlpSD = c( [Slp - self.o.trend.slpSD, flip(tmp) ] )
+            SlpSignPos = self.trend.o.slpSgnPosPr;
+            SlpSignZero = self.trend.o.slpSgnZeroPr;
+        else:
+            Slp = [];
+            SlpSD = [];
+            SlpSignPos = [];
+            SlpSignZero = [];
+
+        if self.hasTOrder:
+            Order = self.o.trend.order;
+        else:
+            Order = [];
+        return (Y, SD, CI, Slp, SlpSD, SlpSignPos, SlpSignZero, Order)
+
+
+    def get_tcp(self):
+        cmpnt, cp, cpCI = (self.o.trend, self.o.trend.cp,self.o.trend.cpCI)
+
+        if    self.ncpStat == 'mode':
+            ncp = cmpnt.ncp_mode;
+        elif  self.ncpStat == 'median':
+            ncp = cmpnt.ncp_median;
+        elif  self.ncpStat == 'mean':
+            ncp = cmpnt.ncp;
+        elif  self.ncpStat == 'pct90':
+            ncp = cmpnt.ncp_pct90;
+        elif self.ncpStat == 'pct10':
+            ncp = cmpnt.ncp_pct10;
+        elif ncpStat == 'max':
+            ncp = sum(~isnan(cp));
+        else:
+            ncp = cmpnt.ncp_mode;
+
+        ncp  = int( round(ncp) );
+        ncpPr, cpPr,cpChange, Prob = (cmpnt.ncpPr, cmpnt.cpPr ,cmpnt.cpAbruptChange, cmpnt.cpOccPr)
+        Prob1 = c( [Prob,Prob - Prob])
+
+        #% %  ###########################################################
+        return (cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1)
+
+
+    def get_S(self):
+        Y = self.o.season.Y;
+        tmp = Y + self.o.season.SD;
+        SD = c( [Y - self.o.season.SD, flip(tmp)])
+
+        if hasattr(self.o.season, 'CI'):
+            tmp = self.o.season.CI[:, 1];
+            CI = c( [self.o.season.CI[:, 0],  flip(tmp)] )
+        else:
+            CI = SD
+
+        if self.hasAmp:
+            Amp = self.o.season.amp;
+            tmp   = Amp + self.o.season.ampSD;
+            AmpSD = c( [Amp - self.o.season.ampSD,  flip(tmp) ])
+        else:
+            Amp = [];
+            AmpSD = [];
+
+        if self.hasSOrder:
+            Order = self.o.season.order;
+        else:
+            Order = [];
+        return (Y, SD, CI, Amp, AmpSD, Order)
+
+    def get_O(self):
+        Y   = self.o.outlier.Y
+        SD = c( [Y - self.o.outlier.SD,  flip(Y + self.o.outlier.SD) ])
+
+        if hasattr(self.o.outlier, 'CI'):
+            CI = c( [self.o.outlier.CI[:,0], flip(self.o.outlier.CI[:, 1]) ] )
+        else:
+            CI = SD
+        return (Y, SD, CI)
+
+    def get_scp(self):
+        cmpnt, cp, cpCI = (self.o.season, self.o.season.cp,self.o.season.cpCI)
+
+        if    self.ncpStat == 'mode':
+            ncp = cmpnt.ncp_mode;
+        elif  self.ncpStat == 'median':
+            ncp = cmpnt.ncp_median;
+        elif  self.ncpStat == 'mean':
+            ncp = cmpnt.ncp;
+        elif  self.ncpStat == 'pct90':
+            ncp = cmpnt.ncp_pct90;
+        elif self.ncpStat == 'pct10':
+            ncp = cmpnt.ncp_pct10;
+        elif self.ncpStat == 'max':
+            ncp = sum(~isnan(cp));
+        else:
+            ncp = cmpnt.ncp_mode;
+
+        ncp  = int( round(ncp) );
+        ncpPr, cpPr,cpChange, Prob = (cmpnt.ncpPr, cmpnt.cpPr ,cmpnt.cpAbruptChange, cmpnt.cpOccPr)
+        Prob1 = c( [Prob, Prob - Prob])
+        #% %  ###########################################################
+        return (cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1)
+
+    def get_ocp(self):
+        cmpnt, cp, cpCI = (self.o.outlier, self.o.outlier.cp,self.o.outlier.cpCI)
+
+        if    self.ncpStat == 'mode':
+            ncp = cmpnt.ncp_mode;
+        elif  self.ncpStat == 'median':
+            ncp = cmpnt.ncp_median;
+        elif  self.ncpStat == 'mean':
+            ncp = cmpnt.ncp;
+        elif  self.ncpStat == 'pct90':
+            ncp = cmpnt.ncp_pct90;
+        elif self.ncpStat == 'pct10':
+            ncp = cmpnt.ncp_pct10
+        elif self.ncpStat == 'max':
+            ncp = sum(~isnan(cp))
+        else:
+            ncp = cmpnt.ncp_mode
+
+        ncp  = int( round(ncp) );
+        ncpPr, cpPr,cpChange, Prob = (cmpnt.ncpPr, cmpnt.cpPr ,[], cmpnt.cpOccPr)
+        Prob1 = c( [Prob, Prob - Prob])
+        #% %  ###########################################################
+        return (cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1)
+
+    def getylim(self, y):
+        ymin,ymax = (min(y), max(y) )
+        yext = ymax -ymin
+        return (ymin - yext*0.1, ymax+yext*0.1)
+
+    def plot_st(self):
+        Yts, YtsSD, Yerr = self.get_Yts()
+        alpha = 0.1;
+        self.h.fill(self.t2t, YtsSD, alpha=0.3, facecolor=self.clr.copy(), linestyle='None');
+        if self.hasData:
+            self.h.plot(t, self.o.data, marker='o', color=self.clr);
+        self.h.plot(self.t, Yts, color=self.clr,linestyle='solid',marker='None')
+        self.h.set_ylim(self.getylim(YtsSD))
+
+    def plot_y(self, mode):
+        if mode == 's':
+            Y, SD, CI, Amp, AmpSD, Order = self.get_S();
+            cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1 = self.get_scp()
+        elif mode == 't':
+            Y, SD, CI, Slp, SlpSD, SlpSignPos, SlpSignZero, Order = self.get_T();
+            cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1 = self.get_tcp();
+        alpha = 0.2;
+        if (self.hasData  and not self.hasSeason):
+            self.h.plot(self.t, self.o.data,  marker='o', color=[.5, .5, .5])
+        self.h.fill(self.t2t, CI, facecolor=self.clr, alpha=alpha, linestyle='None');
+        self.h.plot(self.t, Y, color= self.clr);
+        ylim = self.h.get_ylim()
+        for i in range(ncp):
+            self.h.plot([cp[i], cp[i]], ylim, color='k');
+        self.h.set_ylim(ylim)
+
+    def plot_prob(self, mode):
+        if mode == 'scp':
+            Y, SD, CI, Amp, AmpSD, Order = self.get_S();
+            cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1 = self.get_scp();
+        elif mode == 'tcp':
+            Y, SD, CI, Slp, SlpSD, SlpSignPos, SlpSignZero, Order = self.get_T();
+            cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1 = self.get_tcp();
+        alpha = 0.2;
+        self.h.fill( self.t2t, Prob1, color=self.clr, linestyle='None', alpha=alpha);
+        self.h.plot(self.t, Prob, color=self.clr)
+        maxp = min( [1, max(Prob) * 1.5])
+        maxp = max([maxp, 0.2])
+        self.h.set_ylim( (0, maxp) )
+
+        for i in range(ncp):
+            self.h.plot([cp[i], cp[i] ], self.h.get_ylim(), color='k')
+
+    def plot_order(self, mode):
+        if mode == 'sorder':
+            Y, SD, CI, Amp, AmpSD, Order = self.get_S();
+            cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1 = self.get_scp();
+        elif mode == 'torder':
+            Y, SD, CI, Slp, SlpSD, SlpSignPos, SlpSignZero, Order = self.get_T();
+            cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1 = self.get_tcp();
+        self.h.plot(self.t, Order, color=self.clr);
+        maxp = max([ max(Order), 1.05]);
+        minp = -0.05;
+        self.h.set_ylim([minp, maxp])
+        for i in range(ncp):
+            self.h.plot([cp[i], cp[i]], self.h.get_ylim(), color='k')
+
+    def plot_amp(self):
+        alpha = 0.5;
+        Y, SD, CI, Amp, AmpSD, Order = self.get_S();
+        h.plot(self.t, Amp, color=self.clr);
+
+    def plot_slp(self):
+        alpha = 0.5;
+        Y, SD, CI, Slp, SlpSD, SlpSignPos, SlpSignZero, Order = self.get_T();
+        self.h.fill(self.t2t, SlpSD, color=self.clr, Linestyle='None', alpha=alpha)
+        self.h.plot(self.t, Slp, color=self.clr)
+
+    def plot_slpsgn(self):
+        alpha      = 0.5;
+        Y, SD, CI, Slp, SlpSD, SlpSignPos, SlpSignZero, Order = self.get_T();
+        SlpSignNeg = 1 - SlpSignPos - SlpSignZero;
+        y2y        = c( [self.t - self.t,  flip( SlpSignNeg ) ] )
+        self.h.fill(t2t, y2y, color=[0, 0, 1], linestyle='None', alpha=alpha);
+        y2y = c( [SlpSignNeg,  1 - flip( SlpSignPos) ] )
+        self.h.fill(self.t2t, y2y, color=[0, 1, 0], linestyle='None', alpha=alpha);
+        y2y = c( [1 - SlpSignPos, self.t - self.t + 1])
+        self.h.fill(self.t2t, y2y, color=[1, 0, 0], linestyle='None', alpha=alpha);
+        self.h.plot(self.t, self.t - self.t + 0.5);
+
+    def plot_o(self):
+        alpha = 0.5;
+        Y, SD, CI = self.get_O();
+        if version >= '3.3':
+             self.h.stem(self.t, Y,  linefmt='-', markerfmt=None ,use_line_collection=True)
+        else: 
+             self.h.stem(self.t, Y,  linefmt='-', markerfmt=None)
+
+
+    def plot_oprob(self):
+        alpha = 0.2
+        cp, cpCI, ncp, ncpPr, cpPr, cpChange, Prob, Prob1 = self.get_ocp();
+        if version >= '3.3':
+             self.h.stem(self.t, Prob,  linefmt='-', markerfmt=None,use_line_collection=True)
+        else: 
+             self.h.stem(self.t, Prob,  linefmt='-', markerfmt=None)
+
+
+    def plot_error(self):
+        Yts, YtsSD, Yerr = self.get_Yts();
+        self.h.plot(self.t, self.t - self.t, color=self.clr);
+        if version >= '3.3':
+             self.h.stem(self.t, Yerr, linefmt='-', markerfmt=None,use_line_collection=True)
+        else: 
+             self.h.stem(self.t, Yerr, linefmt='-', markerfmt=None)
+        
 
     def print_params(self):
         if len(self.metadata.__dict__) >= 0:
@@ -506,5 +934,4 @@ class beastmaster():
         for key in self.extra.__dict__.keys():
             print(f'{key} : {self.extra.__dict__[key]}')
         print('--------------------------------------------------------')
-
 
