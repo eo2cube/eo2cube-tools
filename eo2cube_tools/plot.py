@@ -6,7 +6,6 @@ from holoviews import opts
 import datashader as ds
 import pandas as pd
 from holoviews.operation.datashader import regrid, shade
-from datashader.utils import ngjit
 import folium
 import itertools
 import math
@@ -17,7 +16,6 @@ from collections import OrderedDict as odict
 import rioxarray
 
 
-@ngjit
 def normalize_data(agg):
     out = np.zeros_like(agg)
     min_val = 0
