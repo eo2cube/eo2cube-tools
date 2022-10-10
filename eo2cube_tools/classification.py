@@ -163,21 +163,21 @@ class Classifier:
 
         self.result = self.model.__getattribute__(func)(X)
         
-        if self.y is not None:
-            if self.type == 'classifier':
-                self.accuracy_score = metrics.accuracy_score(self.y, self.result)
-                self.recall_score = metrics.recall_score(self.y, self.result)
-                self.precision_score = metrics.precision_score(self.y, self.result)
-                self.f1_score = metrics.f1_score(self.y, self.result)
-            if self.type == 'regressor':
-                self.r2 = metrics.r2_score(self.y, self.result)
-                self.explained_variance = metrics.explained_variance_score(self.y, self.result)
-                self.max_error = metrics.max_error(self.y, self.result) 
-                self.neg_mean_absolute_error = metrics.mean_absolute_error(self.y, self.result)
-                self.neg_mean_squared_error = metrics.mean_squared_error(self.y, self.result)
-                self.neg_root_mean_squared_error = metrics.mean_squared_error(self.y, self.result)
-                self.neg_mean_squared_log_error = metrics.mean_squared_log_error(self.y, self.result)
-                self.neg_median_absolute_error = metrics.median_absolute_error(self.y, self.result)
+        #if self.y is not None:
+        #    if self.type == 'classifier':
+        #        self.accuracy_score = metrics.accuracy_score(self.y, self.result)
+        #        self.recall_score = metrics.recall_score(self.y, self.result)
+        #        self.precision_score = metrics.precision_score(self.y, self.result)
+        #        self.f1_score = metrics.f1_score(self.y, self.result)
+        #    if self.type == 'regressor':
+        #        self.r2 = metrics.r2_score(self.y, self.result)
+        #        self.explained_variance = metrics.explained_variance_score(self.y, self.result)
+        #        self.max_error = metrics.max_error(self.y, self.result) 
+        #        self.neg_mean_absolute_error = metrics.mean_absolute_error(self.y, self.result)
+        #        self.neg_mean_squared_error = metrics.mean_squared_error(self.y, self.result)
+        #        self.neg_root_mean_squared_error = metrics.mean_squared_error(self.y, self.result)
+        #        self.neg_mean_squared_log_error = metrics.mean_squared_log_error(self.y, self.result)
+        #        self.neg_median_absolute_error = metrics.median_absolute_error(self.y, self.result)
     
         data_dims = get_dimensions(ds, feature_dims=self.feature_dims)
         data_shape = get_shape(ds, feature_dims=self.feature_dims)
