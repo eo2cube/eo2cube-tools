@@ -233,11 +233,11 @@ def calculate_indices(
         # Modified Bare Soil Index, Nguyen et al. 2021
         "MBI": lambda ds: ((ds.swir_1 - ds.swir_2 - ds.nir) / (ds.swir_1 + ds.swir_2 + ds.nir)) + 0.5,
         
-        "RVI": lambda ds: (ds.nir / ds.red)
+        "RVI": lambda ds: (ds.nir / ds.red),
         
-        "PVI": lambda ds: (np.sin(np.pi/2.0 - np.arctan(1.0)) * (ds.nir - (0.0)) - np.cos(np.pi / 2.0 - np.arctan(1.0)) * ds.red)
+        "PVI": lambda ds: (np.sin(np.pi/2.0 - np.arctan(1.0)) * (ds.nir - (0.0)) - np.cos(np.pi / 2.0 - np.arctan(1.0)) * ds.red),
         
-        "DVI": lambda ds: (ds.nir - ds.red)
+        "DVI": lambda ds: (ds.nir - ds.red),
         
         "TSAVI": lambda ds: (0.33 * (ds.nir - 0.33 * ds.red - 0.5) / (0.5 * ds.nir + ds.red - 0.5 * 0.33 + 1.5 * np.power(1 + 0.33,2)))
 
