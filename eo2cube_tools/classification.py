@@ -161,7 +161,7 @@ class Classifier:
         if self.scale:
             self.X_train = self._scaler.transform(X)
 
-        result = self.model.__getattribute__(func)(X)
+        self.result = self.model.__getattribute__(func)(X)
         
         if self.y is not None:
             if self.type == 'classifier':
