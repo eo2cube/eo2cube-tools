@@ -170,9 +170,9 @@ def plot_rgb(
         )
                                                                                                                               
     class rgbExplorer(pm.Parameterized):
-        red = pm.Selector(bands, default= bands[0])
+        red = pm.Selector(bands, default= bands[2])
         green = pm.Selector(bands, default= bands[1])
-        blue = pm.Selector(bands, default= bands[2])
+        blue = pm.Selector(bands, default= bands[0])
         time = pm.Selector(times, default=times[0])
         basemap = pm.Selector(bases)
         data_opacity = pm.Magnitude(1.00)
