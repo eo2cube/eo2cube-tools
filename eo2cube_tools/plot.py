@@ -114,7 +114,7 @@ def plot_band(
 @ngjit
 def plot_rgb(
     dataset,
-    bands=["blue", "green", "red"],
+    bands=["red", "green", "blue"],
     dims=["x", "y"],
     nodata = 0
 ):
