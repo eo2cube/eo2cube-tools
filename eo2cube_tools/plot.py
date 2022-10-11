@@ -111,7 +111,6 @@ def plot_band(
     col = pn.Row(pn.panel(explorer.param), explorer.view())
     return col
 
-@ngjit
 def plot_rgb(
     dataset,
     bands=["red", "green", "blue"],
