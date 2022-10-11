@@ -15,7 +15,9 @@ import geoviews.tile_sources as gts
 from collections import OrderedDict as odict
 import rioxarray
 
+from datashader.utils import ngjit
 
+@ngjit
 def normalize_data(agg):
     out = np.zeros_like(agg)
     min_val = 0
@@ -109,7 +111,7 @@ def plot_band(
     col = pn.Row(pn.panel(explorer.param), explorer.view())
     return col
 
-
+@ngjit
 def plot_rgb(
     dataset,
     bands=["blue", "green", "red"],
