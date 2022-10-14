@@ -4,23 +4,31 @@ from collections import OrderedDict
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn import metrics 
-from sklearn.base import is_classifier, is_regressor
 import rasterio
 import geopandas as gpd
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.pipeline import Pipeline
+import itertools
 
 def rasterize(gdf,da,attribute,):    
-    crs = da.geobox.crs
-    transform = da.geobox.transform
-    dims = da.geobox.dims
-    xy_coords = [da[dims[0]], da[dims[1]]]
-    y, x = da.geobox.shape
+    if hasattr(da, 'geobox'):
+        crs = da.geobox.crs
+        transform = da.geobox.transform
+        dims = da.geobox.dims
+        xy_coords = [da[dims[0]], da[dims[1]]]
+        y, x = da.geobox.shape
+    else:
+        crs = da.odc.geobox.crs
+        transform = da.odc.geobox.transform
+        dims = da.odc.geobox.dims
+        xy_coords = [da[dims[0]], da[dims[1]]]
+        y, x = da.odc.geobox.shape
     gdf_reproj = gdf.to_crs(crs=crs)
     shapes = zip(gdf_reproj.geometry, gdf_reproj[attribute])
     arr = rasterio.features.rasterize(shapes=shapes,out_shape=(y, x),transform=transform)
-    xarr = xr.DataArray(arr,coords=xy_coords,dims=dims,attrs=da.attrs,)               
+    xarr = xr.DataArray(arr,coords=xy_coords,dims=dims,attrs=da.attrs,)                              
     return xarr
 
 def extract_samples(ds, gdf, attribute):
@@ -80,13 +88,14 @@ def get_vars_for_dims(ds, dims, invert=False):
 
 
 class ML:
-    def __init__(self, model, feature_dims=[], scale=False, train_size=0.8, stratify=None):
-        self.clf = model
-        self.scale = scale
-        self._scaler = None
+    def __init__(self, pipeline, feature_dims=[], train_size=0.8, stratify=None, drop_bands=False, name='result', to_xarray = False):
+        self.clf = pipeline
         self.train_size = train_size
         self.stratify = stratify
         self.feature_dims = feature_dims
+        self.drop_bands = drop_bands
+        self.name = name
+        self.to_xarray = to_xarray
 
     def extract_Xy(self, ds, labels=None, attribute=None):
         if labels is not None:
@@ -118,24 +127,31 @@ class ML:
             y = np.array(labels).reshape(-1)[ymask][Xmask]
         else:
             y = None
-        if self.scale:
-            self._scaler = preprocessing.StandardScaler()
-            self._scaler.fit(X)
-            X = self._scaler.transform(X) 
+        
         return X,y
     
     def split(self, X, y):
         X, X_test, y, y_test = train_test_split(X, y, train_size=self.train_size, stratify=self.stratify)
         return X, X_test, y, y_test
     
+    def model_performance(self):
+        mp = self.model.predict(self.X_test)
+        return mp
+    
     def train_supervised(self, ds, labels=None, attribute=None):
         X,y = self.extract_Xy(ds, labels=labels, attribute=attribute)
+        self.pipe = pipeline = Pipeline(steps=self.clf)
         if self.train_size != None:
-            self.X, self.X_test, self.y, self.y_test = self.split(X, y)
-        self.model = self.clf.fit(self.X, self.y)
+            self.X_train, self.X_test, self.y_train, self.y_test = self.split(X, y)
+        else:
+            self.X_train = X
+            self.y_train = y     
+        self.model = self.pipe.fit(self.X_train, self.y_train)
+        self.mp = self.model_performance()
         
-    def train_unsupervised(self, ds, labels=None, attribute=None):
-        self.model = self.clf.fit(self.X)
+    def train_unsupervised(self, X):
+        self.pipe = pipeline = Pipeline(steps=self.clf)
+        self.model = self.pipe.fit(self.X)
 
     def predict(self, ds):
         X = get_features(ds, feature_dims=self.feature_dims)
@@ -151,45 +167,63 @@ class ML:
         labels_flat = np.empty(mask.shape + result.shape[1:]) * np.nan
         labels_flat[mask] = result
         labels_data = labels_flat.reshape(data_shape + result.shape[1:])
-        labels = xr.DataArray(labels_data,
-                              dims=data_dims, coords=data_coords)
-        return labels
+        labels = xr.DataArray(labels_data, dims=data_dims, coords=data_coords)
+        if self.to_xarray:
+            return self.to_xr(ds, labels, self.drop_bands, self.name)
+        else:
+            return labels
         
-class Regression(ML):
-    def __init__(self, model, feature_dims=[], scale=False, train_size=0.8, stratify=None):
-        super().__init__(model, feature_dims, scale, train_size, stratify)
+    def metrics(self, metrics):
+        for metric in metrics:
+            return metric(self.y_test, self.mp)
         
-    def extract_Xy(self, ds, labels=None, attribute=None):
-        return super().extract_Xy(ds, labels, attribute)
-        
-    def train(self, ds, labels=None, attribute=None):
-         return super().train_supervised(ds, labels, attribute)
-        
-    def predict(self, ds):
-        return super().predict(ds)
+    def print_metrics(self, metrics):
+        for metric in metrics:
+            print(f'{metric.__name__} : {metric(self.y_test, self.mp)}')
     
-    def model_performance(self):
-        mp = self.model.predict(self.X_test)
-        return mp
+    def to_xr(self, ds, labels, drop_bands, name):
+        ds[name] = labels
+        if drop_bands:
+            ds = ds[['result']]
+        return ds
         
-    def get_metrics(self):
-        mp = self.model_performance()
-        self.r2 = metrics.r2_score(self.y_test, mp)
-        self.explained_variance = metrics.explained_variance_score(self.y_test, mp)
-        self.max_error = metrics.max_error(self.y_test, mp) 
-        self.neg_mean_absolute_error = metrics.mean_absolute_error(self.y_test, mp)
-        self.neg_mean_squared_error = metrics.mean_squared_error(self.y_test, mp)
-        self.neg_root_mean_squared_error = metrics.mean_squared_error(self.y_test, mp)
-        self.neg_mean_squared_log_error = metrics.mean_squared_log_error(self.y_test, mp)
-        self.neg_median_absolute_error = metrics.median_absolute_error(self.y_test, mp)
+    
+class Regression(ML):
+    def __init__(self, pipeline, feature_dims=[], train_size=0.8, stratify=None, drop_bands=False, name='result', to_xarray = False):
+        super().__init__(pipeline, feature_dims, train_size, stratify, drop_bands, name, to_xarray)
+    
+    def train(self, ds, labels=None, attribute=None):
+         return super().train_supervised(ds, labels, attribute)    
         
-    def model_metrics(self):
-        self.get_metrics()
-        print(f'R2 : {self.r2}')
-        print(f'explained_variance : {self.explained_variance}')
-        print(f'max_error : {self.max_error}')
-        print(f'mean_absolute_error : {self.neg_mean_absolute_error}')
-        print(f'mean_squared_error : {self.neg_mean_squared_error}')
-        print(f'root_mean_squared_error : {self.neg_root_mean_squared_error}')
-        print(f'mean_squared_log_error : {self.neg_mean_squared_log_error}')
-        print(f'median_absolute_error : {self.neg_median_absolute_error}')
+class Classification(ML):
+    def __init__(self, pipeline, feature_dims=[], train_size=0.8, stratify=None, drop_bands=False, name='result', to_xarray = False):
+        super().__init__(pipeline, feature_dims, train_size, stratify, drop_bands, name, to_xarray)
+    
+    def train(self, ds, labels=None, attribute=None):
+         return super().train_supervised(ds, labels, attribute) 
+        
+    def get_test_class(self):
+        return np.unique(self.y_test).tolist()
+        
+    def confusion_matrix(self, classes = None, title = 'Confusion matrix', cmap = plt.cm.Blues):
+        cm = self.metrics(metrics=[metrics.confusion_matrix])
+        if classes == None:
+            classes = self.get_test_class()
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+        plt.imshow(cm, interpolation='nearest', cmap=cmap)
+        plt.title(title, fontsize=30)
+        plt.colorbar()
+        tick_marks = np.arange(len(classes))
+        plt.xticks(tick_marks, classes, rotation=45, fontsize=22)
+        plt.yticks(tick_marks, classes, fontsize=22)
+
+        fmt = '.2f'
+        thresh = cm.max() / 2.
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            plt.text(j, i, format(cm[i, j], fmt),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black")
+
+        plt.ylabel('True label', fontsize=25)
+        plt.xlabel('Predicted label', fontsize=25)
