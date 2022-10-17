@@ -1,59 +1,49 @@
-import numpy as np
+import rasterio.features
 import xarray as xr
-from scipy.ndimage import binary_dilation
 
-scl_cat = {'1': 'Saturated or defective pixel',
-    '2': 'Dark features / Shadows',
-    '3': 'Cloud shadows',
-    '4': 'Vegetation',
-    '5': 'Not vegetated',
-    '6': 'Water',
-    '7': 'Unclassified',
-    '8': 'Cloud medium probability',
-    '9': 'cloud high probability',
-    '10': 'Thin cirrus',
-    '11': 'Snow or ice'}
 
-def dilate(array, dilation=10, invert=True):
-    y, x = np.ogrid[
-        -dilation: (dilation + 1),
-        -dilation: (dilation + 1),
-    ]
-
-    # disk-like radial dilation
-    kernel = (x * x) + (y * y) <= (dilation + 0.5) ** 2
-
-    # If invert=True, invert True values to False etc
-    if invert:
-        array = ~array
-
-    return ~binary_dilation(array.astype(np.bool),
-                            structure=kernel.reshape((1,) + kernel.shape))
-
-def scl_mask(dataset, categories = ['Dark features / Shadows','Vegetation', 'Not vegetated', 'Water', 'Unclassified', 'Snow or ice'], dilation = None):
+def mask(dataset, gpd, dims):
     """
-    Takes an xarray dataset and creates a mask based on categories defined in the SCL band
+    Mask a xArray Dataset to a GeoPandasDataframe.
+
+    Description
+    ----------
+    Takes an xArray dataset and a Geodataframe and clips the xArray dataset to the shape of the Geodataframe.
 
     Parameters
     ----------
-    ds : xarray Dataset
-       A two-dimensional or multi-dimensional array including the SCL band
-    categories : list
-       A list of Sentinel-2 Scene Classification Layer (SCL) names. The default is
-       ['Dark features / Shadows','Vegetation', 'Not vegetated', 'Water',
-       'Unclassified', 'Snow or ice'] which will return non-cloudy or
-       non-shadowed land, snow, water, veg, and non-veg pixels.
-    dilation : int, optional
-        An optional integer specifying the number of pixels to dilate
-        by. Defaults to 10, which will dilate `array` by 10 pixels.
+    dataset: xr.Dataset
+         A multi-dimensional array with x,y and time dimensions and one or more data variables.
 
+    gpd: geopandas.Geodataframe
+        A geodataframe object with one or more observations or variables and a geometry column. A filterd geodataframe
+        can also be used as input.
+      
+    dims: list, str
+        A list containing the names of the x and y dimension.
+          
     Returns
     -------
-    An xarray dataset containing a mask for each time step
+    masked_dataset: xr.Dataset
+        A xr.Dataset like the input dataset with only pixels which are within the polygons of the geopandas.Geodataframe.
+        Every other pixel is given the value NaN.
     """
+    x = dims[0]
+    y = dims[1]
+    # selects geometry of the desired gpd and forms a boolean mask from it
+    ShapeMask = rasterio.features.geometry_mask(
+        gpd.loc[:, "geometry"],
+        out_shape=(len(dataset['y']), len(dataset['x'])),
+        transform=dataset.geobox.transform,
+        invert=True,
+    )
+    ShapeMask = xr.DataArray(
+        ShapeMask, dims=(y, x)
+    )  # converts boolean mask into an xArray format
+    masked_dataset = dataset.where(
+        ShapeMask == True
+    )  # combines mask and dataset so only the pixels within the gpd
+    #                                                   polygons are still valid
 
-    assert "scl" in list(dataset.data_vars.keys()), "scl band is missing"
-    if dilation != None:
-        return xr.apply_ufunc(dilate, dataset["scl"].isin([int(k) for k,v in scl_cat.items() if v in categories]), dilation, keep_attrs=True)
-    else:
-        return dataset["scl"].isin([int(k) for k,v in scl_cat.items() if v in categories])
+    del ShapeMask
+    return masked_dataset

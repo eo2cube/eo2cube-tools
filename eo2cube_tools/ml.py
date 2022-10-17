@@ -10,25 +10,18 @@ from sklearn import preprocessing
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.pipeline import Pipeline
-import itertools
+
 
 def rasterize(gdf,da,attribute,):    
-    if hasattr(da, 'geobox'):
-        crs = da.geobox.crs
-        transform = da.geobox.transform
-        dims = da.geobox.dims
-        xy_coords = [da[dims[0]], da[dims[1]]]
-        y, x = da.geobox.shape
-    else:
-        crs = da.odc.geobox.crs
-        transform = da.odc.geobox.transform
-        dims = da.odc.geobox.dims
-        xy_coords = [da[dims[0]], da[dims[1]]]
-        y, x = da.odc.geobox.shape
+    crs = da.geobox.crs
+    transform = da.geobox.transform
+    dims = da.geobox.dims
+    xy_coords = [da[dims[0]], da[dims[1]]]
+    y, x = da.geobox.shape
     gdf_reproj = gdf.to_crs(crs=crs)
     shapes = zip(gdf_reproj.geometry, gdf_reproj[attribute])
     arr = rasterio.features.rasterize(shapes=shapes,out_shape=(y, x),transform=transform)
-    xarr = xr.DataArray(arr,coords=xy_coords,dims=dims,attrs=da.attrs,)                              
+    xarr = xr.DataArray(arr,coords=xy_coords,dims=dims,attrs=da.attrs,)               
     return xarr
 
 def extract_samples(ds, gdf, attribute):
@@ -88,14 +81,35 @@ def get_vars_for_dims(ds, dims, invert=False):
 
 
 class ML:
-    def __init__(self, pipeline, feature_dims=[], train_size=0.8, stratify=None, drop_bands=False, name='result', to_xarray = False):
+    def __init__(self, pipeline, feature_dims=[], train_size=0.8, stratify=None, to_xarray = False, vname='result'):
         self.clf = pipeline
         self.train_size = train_size
         self.stratify = stratify
         self.feature_dims = feature_dims
-        self.drop_bands = drop_bands
-        self.name = name
+        self.vname = vname
         self.to_xarray = to_xarray
+        
+    """
+    Xarray wrapper for scikit-learn
+
+    Parameters
+    ----------
+    
+    pipeline : sklearn.pipeline.Pipeline
+        A scikit-learn pipeline. The pipeline can involve pre-processing, feature selection, classification/regression, and post-processing.
+    feature_dims : list, optional
+        A list of additional dimensions to use as features
+    train_size: int or float
+        If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the train split. 
+        If int, represents the absolute number of train samples. 
+    stratify: array-like
+        If not None, data is split in a stratified fashion, using this as the class labels.
+    to_xarray: bool
+        Return result as XarrayDataset
+    vname: str
+        Data Variable name for the result
+    
+    """    
 
     def extract_Xy(self, ds, labels=None, attribute=None):
         if labels is not None:
@@ -142,11 +156,11 @@ class ML:
         X,y = self.extract_Xy(ds, labels=labels, attribute=attribute)
         self.pipe = pipeline = Pipeline(steps=self.clf)
         if self.train_size != None:
-            self.X_train, self.X_test, self.y_train, self.y_test = self.split(X, y)
+            self.X, self.X_test, self.y, self.y_test = self.split(X, y)
         else:
-            self.X_train = X
-            self.y_train = y     
-        self.model = self.pipe.fit(self.X_train, self.y_train)
+            self.X = X
+            self.y = y     
+        self.model = self.pipe.fit(self.X, self.y)
         self.mp = self.model_performance()
         
     def train_unsupervised(self, X):
@@ -169,7 +183,7 @@ class ML:
         labels_data = labels_flat.reshape(data_shape + result.shape[1:])
         labels = xr.DataArray(labels_data, dims=data_dims, coords=data_coords)
         if self.to_xarray:
-            return self.to_xr(ds, labels, self.drop_bands, self.name)
+            return self.to_xr(ds, labels, self.vname)
         else:
             return labels
         
@@ -181,27 +195,25 @@ class ML:
         for metric in metrics:
             print(f'{metric.__name__} : {metric(self.y_test, self.mp)}')
     
-    def to_xr(self, ds, labels, drop_bands, name):
-        ds[name] = labels
-        if drop_bands:
-            ds = ds[['result']]
+    def to_xr(self, ds, labels, vname):
+        ds[vname] = labels
         return ds
         
     
 class Regression(ML):
-    def __init__(self, pipeline, feature_dims=[], train_size=0.8, stratify=None, drop_bands=False, name='result', to_xarray = False):
-        super().__init__(pipeline, feature_dims, train_size, stratify, drop_bands, name, to_xarray)
+    def __init__(self, pipeline, feature_dims=[], train_size=0.8, stratify=None, to_xarray = False, vname='result'):
+        super().__init__(pipeline, feature_dims, train_size, stratify, to_xarray, vname)
     
     def train(self, ds, labels=None, attribute=None):
          return super().train_supervised(ds, labels, attribute)    
         
 class Classification(ML):
-    def __init__(self, pipeline, feature_dims=[], train_size=0.8, stratify=None, drop_bands=False, name='result', to_xarray = False):
-        super().__init__(pipeline, feature_dims, train_size, stratify, drop_bands, name, to_xarray)
+    def __init__(self, pipeline, feature_dims=[], train_size=0.8, stratify=None, to_xarray = False, vname='result'):
+        super().__init__(pipeline, feature_dims, train_size, stratify,to_xarray, vname)
     
     def train(self, ds, labels=None, attribute=None):
          return super().train_supervised(ds, labels, attribute) 
-        
+         
     def get_test_class(self):
         return np.unique(self.y_test).tolist()
         
@@ -210,20 +222,17 @@ class Classification(ML):
         if classes == None:
             classes = self.get_test_class()
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-
         plt.imshow(cm, interpolation='nearest', cmap=cmap)
         plt.title(title, fontsize=30)
         plt.colorbar()
         tick_marks = np.arange(len(classes))
         plt.xticks(tick_marks, classes, rotation=45, fontsize=22)
         plt.yticks(tick_marks, classes, fontsize=22)
-
         fmt = '.2f'
         thresh = cm.max() / 2.
         for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
             plt.text(j, i, format(cm[i, j], fmt),
                      horizontalalignment="center",
                      color="white" if cm[i, j] > thresh else "black")
-
         plt.ylabel('True label', fontsize=25)
         plt.xlabel('Predicted label', fontsize=25)
