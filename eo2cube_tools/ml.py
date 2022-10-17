@@ -10,6 +10,7 @@ from sklearn import preprocessing
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.pipeline import Pipeline
+import itertools
 
 
 def rasterize(gdf,da,attribute,):    
