@@ -1,0 +1,17 @@
+shapely
+fiona
+xarray
+datacube
+bokeh
+matplotlib
+numba
+pandas
+scikit-image
+scikit-learn
+seaborn
+statsmodels
+geopandas
+rioxarray
+hvplot
+dask
+rasterstats
