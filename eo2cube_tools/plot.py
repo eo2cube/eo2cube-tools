@@ -17,11 +17,12 @@ import rioxarray
 
 from datashader.utils import ngjit
 
+
 @ngjit
 def normalize_data(agg):
     out = np.zeros_like(agg)
     min_val = 0
-    max_val = 2 ** 16 - 1
+    max_val = 2**16 - 1
     range_val = max_val - min_val
     col, rows = agg.shape
     c = 70
@@ -62,61 +63,72 @@ def plot_band(
     nodata: int
         Value defining the nodata value for the dataset
     """
-    
+
     pn.extension()
     wm_dataset = dataset.rio.reproject("EPSG:3857", nodata=nodata)
-    maps   = ['EsriImagery','EsriNatGeo', 'EsriTerrain', 'OSM']
-    bases  = odict([(name, gts.tile_sources[name].relabel(name)) for name in maps])
-    gopts  = hv.opts.WMTS(responsive=True, xaxis=None, yaxis=None, bgcolor='black', show_grid=False)
-    times   = [np.datetime64(ts) for ts in dataset.time.values]
-    bands   = [var for var in dataset.data_vars]
-    
-    class band():
-        def __init__(self,dataset, band, time, dims=dims, nodata=nodata):
-            self.dataset =dataset
+    maps = ["EsriImagery", "EsriNatGeo", "EsriTerrain", "OSM"]
+    bases = odict([(name, gts.tile_sources[name].relabel(name)) for name in maps])
+    gopts = hv.opts.WMTS(
+        responsive=True, xaxis=None, yaxis=None, bgcolor="black", show_grid=False
+    )
+    times = [np.datetime64(ts) for ts in dataset.time.values]
+    bands = [var for var in dataset.data_vars]
+
+    class band:
+        def __init__(self, dataset, band, time, dims=dims, nodata=nodata):
+            self.dataset = dataset
             self.band = band
             self.time = time
             self.dims = dims
             self.nodata = nodata
 
-        def calc_band(self):       
+        def calc_band(self):
             data = self.dataset[self.band].sel(time=self.time)
-            xs, ys = (data[self.dims[0]],data[self.dims[1]],)
+            xs, ys = (
+                data[self.dims[0]],
+                data[self.dims[1]],
+            )
             b = ds.utils.orient_array(data)
-            a = (np.where(np.logical_or(np.isnan(b), b <= self.nodata), 0, 255)).astype(np.uint8)
+            a = (np.where(np.logical_or(np.isnan(b), b <= self.nodata), 0, 255)).astype(
+                np.uint8
+            )
             self.view = hv.RGB((xs, ys[::-1], b, b, b, a), vdims=list("RGBA"))
             return hv.RGB((xs, ys[::-1], b, b, b, a), vdims=list("RGBA"))
-                                                                                                                              
+
     class bandExplorer(pm.Parameterized):
-        band       = pm.Selector(bands, default= bands[0])
-        time       = pm.Selector(times, default=times[0])
+        band = pm.Selector(bands, default=bands[0])
+        time = pm.Selector(times, default=times[0])
         basemap = pm.Selector(bases)
         data_opacity = pm.Magnitude(1.00)
         map_opacity = pm.Magnitude(1.00)
-        
-        @pm.depends('map_opacity', 'basemap')
+
+        @pm.depends("map_opacity", "basemap")
         def tiles(self):
             return self.basemap.opts(gopts).opts(alpha=self.map_opacity)
-        
-        @pm.depends('time', 'band','data_opacity', on_init=True)
+
+        @pm.depends("time", "band", "data_opacity", on_init=True)
         def update_image(self):
-            b = band(wm_dataset, band = self.band, time = self.time, dims = ['x','y'], nodata = nodata)
+            b = band(
+                wm_dataset,
+                band=self.band,
+                time=self.time,
+                dims=["x", "y"],
+                nodata=nodata,
+            )
             b.calc_band()
-            return (shade(regrid(b.view,dynamic=False),dynamic=False, cmap=cmap, clims=clims).opts(alpha=self.data_opacity)) 
-        
+            return shade(
+                regrid(b.view, dynamic=False), dynamic=False, cmap=cmap, clims=clims
+            ).opts(alpha=self.data_opacity)
+
         def view(self):
             return hv.DynamicMap(self.tiles) * hv.DynamicMap(self.update_image)
-    
-    explorer = bandExplorer(name = 'Image Explorer')    
+
+    explorer = bandExplorer(name="Image Explorer")
     col = pn.Row(pn.panel(explorer.param), explorer.view())
     return col
 
-def plot_rgb(
-    dataset,
-    bands=["red", "green", "blue"],
-    dims=["x", "y"],
-    nodata = 0
-):
+
+def plot_rgb(dataset, bands=["red", "green", "blue"], dims=["x", "y"], nodata=0):
 
     """Interactive RGB visualization of a xarray time series
     Description
@@ -131,16 +143,18 @@ def plot_rgb(
     dim : list, str
         A list containing the names of the x and y dimension.
     """
-    
+
     pn.extension()
     wm_dataset = dataset.rio.reproject("EPSG:3857", nodata=nodata)
-    maps   = ['EsriImagery','EsriNatGeo', 'EsriTerrain', 'OSM']
-    bases  = odict([(name, gts.tile_sources[name].relabel(name)) for name in maps])
-    gopts  = hv.opts.WMTS(responsive=True, xaxis=None, yaxis=None, bgcolor='black', show_grid=False)
-    times   = [np.datetime64(ts) for ts in dataset.time.values]
-    bands   = [var for var in dataset.data_vars]
-    
-    class rgb():
+    maps = ["EsriImagery", "EsriNatGeo", "EsriTerrain", "OSM"]
+    bases = odict([(name, gts.tile_sources[name].relabel(name)) for name in maps])
+    gopts = hv.opts.WMTS(
+        responsive=True, xaxis=None, yaxis=None, bgcolor="black", show_grid=False
+    )
+    times = [np.datetime64(ts) for ts in dataset.time.values]
+    bands = [var for var in dataset.data_vars]
+
+    class rgb:
         def __init__(self, dataset, red, green, blue, time, dims=dims, nodata=nodata):
             self.r = red
             self.g = green
@@ -151,7 +165,10 @@ def plot_rgb(
             self.nodata = nodata
 
         def calc_rgb(self):
-            xs, ys = self.dataset[self.r].sel(time=self.time)[self.dims[0]], self.dataset[self.r].sel(time=self.time)[self.dims[1]]
+            xs, ys = (
+                self.dataset[self.r].sel(time=self.time)[self.dims[0]],
+                self.dataset[self.r].sel(time=self.time)[self.dims[1]],
+            )
             r, g, b = [
                 ds.utils.orient_array(img)
                 for img in (
@@ -160,38 +177,46 @@ def plot_rgb(
                     self.dataset[self.b].sel(time=self.time),
                 )
             ]
-            a = (np.where(np.logical_or(np.isnan(r), r <= nodata), 0, 255)).astype(np.uint8)
+            a = (np.where(np.logical_or(np.isnan(r), r <= nodata), 0, 255)).astype(
+                np.uint8
+            )
             r = (normalize_data(r)).astype(np.uint8)
             g = (normalize_data(g)).astype(np.uint8)
             b = (normalize_data(b)).astype(np.uint8)
             self.view = hv.RGB((xs, ys[::-1], r, g, b, a), vdims=list("RGBA"))
-            return (
-                hv.RGB((xs, ys[::-1], r, g, b, a), vdims=list("RGBA"))
-        )
-                                                                                                                              
+            return hv.RGB((xs, ys[::-1], r, g, b, a), vdims=list("RGBA"))
+
     class rgbExplorer(pm.Parameterized):
-        red = pm.Selector(bands, default= bands[2])
-        green = pm.Selector(bands, default= bands[1])
-        blue = pm.Selector(bands, default= bands[0])
+        red = pm.Selector(bands, default=bands[2])
+        green = pm.Selector(bands, default=bands[1])
+        blue = pm.Selector(bands, default=bands[0])
         time = pm.Selector(times, default=times[0])
         basemap = pm.Selector(bases)
         data_opacity = pm.Magnitude(1.00)
         map_opacity = pm.Magnitude(1.00)
-        
-        @pm.depends('map_opacity', 'basemap')
+
+        @pm.depends("map_opacity", "basemap")
         def tiles(self):
             return self.basemap.opts(gopts).opts(alpha=self.map_opacity)
-        
-        @pm.depends('time', 'red','green','blue','data_opacity', on_init=True)
+
+        @pm.depends("time", "red", "green", "blue", "data_opacity", on_init=True)
         def update_image(self):
-            b = rgb(wm_dataset, red = self.red, blue = self.blue, green = self.green, time = self.time, dims = ['x','y'], nodata= nodata)
+            b = rgb(
+                wm_dataset,
+                red=self.red,
+                blue=self.blue,
+                green=self.green,
+                time=self.time,
+                dims=["x", "y"],
+                nodata=nodata,
+            )
             b.calc_rgb()
-            return (regrid(b.view,dynamic=False)).opts(alpha=self.data_opacity)
-        
+            return (regrid(b.view, dynamic=False)).opts(alpha=self.data_opacity)
+
         def view(self):
             return hv.DynamicMap(self.tiles) * hv.DynamicMap(self.update_image)
-    
-    explorer = rgbExplorer(name = 'Image Explorer')    
+
+    explorer = rgbExplorer(name="Image Explorer")
     col = pn.Row(pn.panel(explorer.param), explorer.view())
     return col
 
@@ -285,7 +310,6 @@ def spectral_analyze(
     spectrum_curve = hv.DynamicMap(spectrum, streams=[tap])
 
     return combine_bands() * spectrum_curve
-    
 
 
 def _degree_to_zoom_level(l1, l2, margin=0.0):
@@ -300,9 +324,7 @@ def _degree_to_zoom_level(l1, l2, margin=0.0):
     return zoom_level_int
 
 
-def map_polygon(
-    gdf=None, tooltip_attributes=None
-):
+def map_polygon(gdf=None, tooltip_attributes=None):
     """
     Generates a folium map based on a lat-lon bounded rectangle.
     Description
@@ -325,8 +347,8 @@ def map_polygon(
     .. _Folium
         https://github.com/python-visualization/folium
     """
-    
-    longitude = (gdf.total_bounds[0],gdf.total_bounds[2])
+
+    longitude = (gdf.total_bounds[0], gdf.total_bounds[2])
     latitude = (gdf.total_bounds[1], gdf.total_bounds[3])
 
     ###### ###### ######   CALC ZOOM LEVEL     ###### ###### ######
@@ -351,10 +373,10 @@ def map_polygon(
         control=True,
     ).add_to(map_hybrid)
     ###### ###### ######     POLYGONS    ###### ###### ######
-    
+
     if tooltip_attributes != None:
-    	tooltip_attributes = folium.features.GeoJsonTooltip(fields=tooltip_attributes)
-    
+        tooltip_attributes = folium.features.GeoJsonTooltip(fields=tooltip_attributes)
+
     if gdf is not None:
         gjson = gdf.to_json()
         folium.features.GeoJson(gjson)
