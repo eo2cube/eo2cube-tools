@@ -1,6 +1,7 @@
 import numpy as np
 import geopandas as gpd
 import xarray as xr
+import pandas as pd
 
 def coords_to_indices(x, y, transform):
     col_index, row_index = ~transform * (x, y)
