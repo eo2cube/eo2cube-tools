@@ -32,8 +32,7 @@ def extract_by_points(ds, gdf, bands):
     xidx = xr.DataArray(x, dims='z')
     res = data.isel(y=yidx, x=xidx)
 
-    ime_names = res.time.values
-    time_format='%Y%m%d'
+    res.time.values
     time_names = [f't{t}' for t in  np.datetime_as_string(ds.time.values).tolist()]
     
     for band in bands:
