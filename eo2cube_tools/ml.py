@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 import rasterio
+import rasterio.features as features
 import geopandas as gpd
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
@@ -64,7 +65,7 @@ def rasterize(
         y, x = da.odc.geobox.shape
     gdf_reproj = gdf.to_crs(crs=crs)
     shapes = zip(gdf_reproj.geometry, gdf_reproj[attribute])
-    arr = rasterio.features.rasterize(
+    arr = features.rasterize(
         shapes=shapes, out_shape=(y, x), transform=transform
     )
     xarr = xr.DataArray(
