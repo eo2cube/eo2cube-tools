@@ -158,7 +158,7 @@ class extracter():
         res = self.ds.isel(y=yidx, x=xidx)
         time_names = res.time.values
         time_format='%Y%m%d'
-        time_names = [f't{t}' for t in  np.datetime_as_string(ds.time.values).tolist()]
+        time_names = [f't{t}' for t in  np.datetime_as_string(self.ds.time.values).tolist()]
         for band in self.bands:
             band_names_concat = []
             for t in time_names:
