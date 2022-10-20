@@ -1,4 +1,5 @@
 import geopandas as gpd
+from multiprocessing import Pool
 import pandas as pd
 import numpy as np
 import xarray as xr
@@ -92,9 +93,9 @@ class extracter():
                                 
         ):
         
-        df_columns = gdf.columns
+        df_columns = gdf_row.columns
         fid = gdf_row[attribute]
-        other_cols = [col for col in df_columns if col not in ['extractor_id', 'geometry']]
+        other_cols = [col for col in df_columns if col not in ['polygon_id', 'geometry']]
         raster = self.rasterize(
                     gdf_row,
                     attribute = attribute,
@@ -123,20 +124,21 @@ class extracter():
         except ValueError:
             fid_ = str(fid)
             fid_ = np.zeros([fid_] * n_samples, dtype=object)
-
+        
         crs = ds.odc.geobox.crs.crs_str
-        df = gpd.GeoDataFrame(
+        rdf = gpd.GeoDataFrame(
             data=np.c_[fid_, np.arange(0, n_samples)],
             geometry=gpd.points_from_xy(x_coords, y_coords),
             crs=crs,
-            columns=[attribute],
+            columns=[attribute,'point'],
         )
-
-        if not df.empty:
+        if not rdf.empty:
             for col in other_cols:
-                fea_df = df.assign(**{col: gdf_row[col]})
-
-        return df        
+                rdf = rdf.assign(**{col: gdf_row[col].values[0]})
+        return rdf    
+    
+    def _iter_func(self, a):
+        return a
 
     
     def coords_to_indices(self, x, y, transform):
@@ -171,6 +173,7 @@ class extracter():
                     merge_alg = 'replace',
                     all_touched=False,
                     subset = 1,
+                    n_jobs = 1,
     ):
 
         if isinstance(self.bands, list):
@@ -181,23 +184,27 @@ class extracter():
         self.gdf['polygon_id'] = self.gdf.index.values    
         dataframes = []
         gdf_columns = self.gdf.columns.tolist()
-
-        for i in range(0, len(self.gdf.index)):
-            point_df = self.sample_feature_by_shape(self.ds,
-                        gdf_row = self.gdf.iloc[[i]],
-                        attribute = 'polygon_id',                            
-                        merge_alg = merge_alg,
-                        all_touched=all_touched,
-                        subset = subset,
-                    )
-            if not point_df.empty:
-                dataframes.append(point_df)
+        with Pool(processes=n_jobs) as pool:
+            for i in pool.imap(self._iter_func, range(0, len(self.gdf.index))):
+                point_df = self.sample_feature_by_shape(self.ds,
+                            gdf_row = self.gdf.iloc[[i]],
+                            attribute = 'polygon_id',                            
+                            merge_alg = merge_alg,
+                            all_touched=all_touched,
+                            subset = subset,
+                        )
+                if not point_df.empty:
+                    dataframes.append(point_df)
 
         dataframes = pd.concat(dataframes, axis=0)
         self.gdf = dataframes.assign(point=np.arange(0, dataframes.shape[0]))
         if not self.gdf.empty:
             self.gdf.index = list(range(0, self.gdf.shape[0]))
         df = self.extract_by_points() 
+        temp_cols=df.columns.tolist()
+        index=df.columns.get_loc("geometry")
+        new_cols= temp_cols[0:index] + temp_cols[index+1:] + temp_cols[index:index+1]
+        df=df[new_cols]
         return df
 
 def point_extract(ds, gdf, bands):
@@ -220,7 +227,7 @@ def point_extract(ds, gdf, bands):
         
     return extracter(ds = ds, gdf = gdf, bands = bands).extract_by_points()
     
-def polygon_extract(ds, gdf, bands, agg=None, subset = 1, merge_alg = 'replace', all_touched=False):
+def polygon_extract(ds, gdf, bands, agg=None, subset = 1, merge_alg = 'replace', all_touched=False, n_jobs = 1 ):
     if isinstance(ds, xr.Dataset) or isinstance(ds, xr.DataArray):
             pass
     else:
@@ -239,7 +246,7 @@ def polygon_extract(ds, gdf, bands, agg=None, subset = 1, merge_alg = 'replace',
         raise TypeError (f'geometry must be of type {Polygon} or {MultiPolygon}')
     
     if agg is not None:
-        result = extracter(ds = ds, gdf = gdf, bands = bands).extract_by_polygon(merge_alg = merge_alg ,all_touched=all_touched, subset = subset )
+        result = extracter(ds = ds, gdf = gdf, bands = bands).extract_by_polygon(merge_alg = merge_alg ,all_touched=all_touched, subset = subset).drop(['point','index'], axis=1)
         dic = dict()
         for column in result.columns:
             if column == 'geometry':
@@ -248,5 +255,16 @@ def polygon_extract(ds, gdf, bands, agg=None, subset = 1, merge_alg = 'replace',
                 dic[column] = agg
         return result.groupby('polygon_id').aggregate(dic)
     else:   
-        return extracter(ds = ds, gdf = gdf, bands = bands).extract_by_polygon(merge_alg = merge_alg ,all_touched=all_touched, subset = subset )
+        return extracter(ds = ds, gdf = gdf, bands = bands).extract_by_polygon(merge_alg = merge_alg ,all_touched=all_touched, subset = subset ).drop(['point','index'], axis=1)
+    
+def zonal(ds, gdf, bands, groupby, agg, tagg=None, subset = 1, merge_alg = 'replace', all_touched=False,  n_jobs = 5):
+    result = extracter(ds = ds, gdf = gdf, bands = bands).extract_by_polygon(merge_alg = merge_alg ,all_touched=all_touched, subset = subset, n_jobs = n_jobs ).drop(['point','index','geometry', 'polygon_id'], axis=1)
+    dic = dict()
+    result['pixel_count'] = 1
+    for column in result.columns:
+        if column == 'pixel_count':
+            dic['pixel_count'] = 'sum'
+        else:
+            dic[column] = agg
+    return result.groupby(groupby).aggregate(dic)
     
