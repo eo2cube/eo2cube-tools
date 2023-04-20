@@ -179,9 +179,10 @@ class ML:
         self.model = self.pipe.fit(self.X_train, self.y_train)
         self.mp = self.model_performance()
 
-    def train_unsupervised(self, X):
-        self.pipe = pipeline = Pipeline(steps=self.clf)
-        self.model = self.pipe.fit(self.X)
+    def train_unsupervised(self, ds):
+        X, y = extract_Xy(ds)
+        self.pipe = Pipeline(steps=self.clf)
+        self.model = self.pipe.fit(X)
 
     def predict(self, ds):
         X = get_features(ds, feature_dims=self.feature_dims)
@@ -252,8 +253,11 @@ class Classification(ML):
             pipeline, feature_dims, train_size, stratify, drop_bands, name, to_xarray
         )
 
-    def train(self, ds, labels=None, attribute=None):
+    def train_supervised(self, ds, labels=None, attribute=None):
         return super().train_supervised(ds, labels, attribute)
+    
+    def train_unsupervised(self, ds):
+        return super().train_unsupervised(ds)
 
     def get_test_class(self):
         return np.unique(self.y_test).tolist()
